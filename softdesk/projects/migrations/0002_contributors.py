@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('database', '0001_initial'),
+        ('projects', '0001_initial'),
     ]
 
     operations = [
@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('permission', models.CharField(choices=[('1', 'Total access'), ('2', 'Restricted access'), ('3', 'Forbidden access')], default='1', max_length=1)),
                 ('role', models.CharField(max_length=128)),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.projects')),
+                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='projects.projects')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),

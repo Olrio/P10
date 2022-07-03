@@ -17,7 +17,8 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 
-from database.views import ProjectsViewset, UserViewset
+from projects.views import ProjectsViewset
+from authentication.views import UserViewset
 
 router = routers.SimpleRouter()
 router.register('projects', ProjectsViewset, basename='projects')
