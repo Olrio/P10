@@ -10,6 +10,10 @@ class Projects(models.Model):
         on_delete=models.CASCADE
     )
 
+    def __str__(self):
+        return f"{self.title} ({self.id})"
+
+
 class Contributors(models.Model):
     user = models.ForeignKey(
         to=User,
@@ -25,7 +29,8 @@ class Contributors(models.Model):
     permission = models.CharField(max_length=1,
                                   choices=PERMISSION_CHOICES,
                                   default='1')
-    role  = models.CharField(max_length=128)
+    role = models.CharField(max_length=128)
+
 
 class Issues(models.Model):
     title = models.CharField(max_length=128)
@@ -34,7 +39,8 @@ class Issues(models.Model):
     priority = models.CharField(max_length=128)
     project = models.ForeignKey(
         to=Projects,
-        on_delete=models.CASCADE)
+        on_delete=models.CASCADE,
+        related_name="issues")
     author = models.ForeignKey(
         to=User,
         on_delete=models.CASCADE,
@@ -46,6 +52,8 @@ class Issues(models.Model):
         related_name="assignee"
     )
     created_time = models.DateTimeField(auto_now_add=True)
+
+
 
 class Comments(models.Model):
     description = models.CharField(max_length=2048)
