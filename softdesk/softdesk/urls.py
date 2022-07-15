@@ -28,9 +28,8 @@ router.register('user', UserViewset, basename='user')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api-auth/', include('rest_framework.urls')),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/', include(router.urls)),
     path('signup/', RegisterUserViewset.as_view(), name='register'),
+    path('login/', TokenObtainPairView.as_view(), name='login'),
 ]

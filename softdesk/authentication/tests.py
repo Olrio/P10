@@ -46,18 +46,6 @@ class TestUser(DataTest):
         expected = self.get_user_data(User.objects.get(pk=self.user1.pk), 'retrieve')
         self.assertEqual(expected, response.json())
 
-    def test_create(self):
-        self.user1.delete()
-        self.user2.delete()
-        self.assertFalse(User.objects.exists())
-        response = self.client.post(self.url_list, data={'username': 'Nouvel_utilisateur', 'password': 'toto1234'})
-        self.assertEqual(response.status_code, 201)
-        self.assertTrue(User.objects.exists())
-
-    def test_register_too_short_username(self):
-        response = self.client.post(reverse('register'), data={'username': 'Jo'})
-        self.assertEqual(response.status_code, 400)
-
     def test_update_list(self):
         response = self.client.patch(self.url_list, data={"username": "Utilisateur_2222"})
         self.assertEqual(response.status_code, 405)
@@ -74,3 +62,34 @@ class TestUser(DataTest):
         self.assertTrue(User.objects.filter(pk=22).exists())
         self.client.delete(self.url_detail)
         self.assertFalse(User.objects.filter(pk=22).exists())
+
+    def test_register(self):
+        count_user = User.objects.all().count()
+        url = reverse('register')
+        resp = self.client.post(url, {
+            'username': 'UserToto',
+            'password': 'toto1234',
+            'password2': 'toto1234',
+            'email': 'toto2222@toto.com'
+        }, format='json')
+        # validation of registration process
+        self.assertEqual(resp.status_code, 201)
+        # verify there's one more instance of User
+        self.assertEqual(User.objects.all().count(), count_user+1)
+        return User.objects.get(username=resp.json()['username'])
+
+    def test_register_too_short_username(self):
+        response = self.client.post(reverse('register'), data={'username': 'Jo'})
+        self.assertEqual(response.status_code, 400)
+
+    def test_login(self):
+        self.test_register()
+        url = reverse('login')
+        resp = self.client.post(url, {
+            'username': 'UserToto',
+            'password': 'toto1234',
+        }, format='json')
+        # verify that given a valid username and password of a user, request returns two tokens
+        self.assertTrue(resp.json()['refresh'] is not None)
+        self.assertTrue(resp.json()['access'] is not None)
+        return resp.json()
