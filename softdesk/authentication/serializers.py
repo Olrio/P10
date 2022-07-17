@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.validators import UnicodeUsernameValidator
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -21,7 +22,8 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         min_length=3,
         validators=[UniqueValidator(queryset=User.objects.all(),
                                     message='This username already exists. Please choose another one',
-                                    )]
+                                    ),
+                    UnicodeUsernameValidator()]
     )
     password = serializers.CharField(
         required=True,

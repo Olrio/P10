@@ -65,7 +65,7 @@ class TestUser(DataTest):
 
     def test_register(self):
         count_user = User.objects.all().count()
-        url = reverse('register')
+        url = reverse('signup')
         resp = self.client.post(url, {
             'username': 'UserToto',
             'password': 'toto1234',
@@ -79,7 +79,7 @@ class TestUser(DataTest):
         return User.objects.get(username=resp.json()['username'])
 
     def test_register_too_short_username(self):
-        response = self.client.post(reverse('register'), data={'username': 'Jo'})
+        response = self.client.post(reverse('signup'), data={'username': 'Jo'})
         self.assertEqual(response.status_code, 400)
 
     def test_login(self):

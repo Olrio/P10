@@ -24,7 +24,7 @@ class DataTest(APITestCase):
             }
 
     def register(self, name, mail):
-        url = reverse('register')
+        url = reverse('signup')
         resp = self.client.post(url, {
             'username': name,
             'password': 'secret1234',
