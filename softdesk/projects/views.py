@@ -1,5 +1,6 @@
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
-from projects.models import Projects, Issues
+from rest_framework.decorators import action
+from projects.models import Projects, Issues, Contributors
 from django.contrib.auth.models import User
 from projects.serializers import ProjectsListSerializer, \
     ProjectsDetailSerializer, IssuesListSerializer, IssuesDetailSerializer
@@ -20,8 +21,16 @@ class ProjectsViewset(MultipleSerializerMixin, ModelViewSet):
     detail_serializer_class = ProjectsDetailSerializer
     permission_classes = [IsAuthenticated]
 
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+        Contributors.objects.create(
+            user=self.request.user,
+            project=Projects.objects.get(id=serializer.data['id']),
+            role='AUTHOR'
+        )
+
     def get_queryset(self):
-        return Projects.objects.filter(author=self.request.user)
+        return Projects.objects.filter(author=self.request.user.id)
 
 
 class IssuesViewset(MultipleSerializerMixin, ModelViewSet):

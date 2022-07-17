@@ -7,7 +7,7 @@ class Projects(models.Model):
     type = models.CharField(max_length=128)
     author = models.ForeignKey(
         to=User,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
     )
 
     def __str__(self):
@@ -22,14 +22,12 @@ class Contributors(models.Model):
         to=Projects,
         on_delete=models.CASCADE)
     PERMISSION_CHOICES = [
-        ('1', 'Total access'),
-        ('2', 'Restricted access'),
-        ('3', 'Forbidden access')
+        ('AUTHOR', 'Author'),
+        ('CONTRIBUTOR', 'Contributor'),
     ]
-    permission = models.CharField(max_length=1,
-                                  choices=PERMISSION_CHOICES,
-                                  default='1')
-    role = models.CharField(max_length=128)
+    role = models.CharField(max_length=128,
+                            choices=PERMISSION_CHOICES,
+                            )
 
 
 class Issues(models.Model):
