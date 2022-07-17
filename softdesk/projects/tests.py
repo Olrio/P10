@@ -12,14 +12,12 @@ class DataTest(APITestCase):
                 {
                     'id': project.id,
                     'title': project.title,
-                    'author': project.author.id,
                 } for project in projects
             ]
         elif action == 'retrieve':
             return {
                 'id': projects.id,
                 'title': projects.title,
-                'author': projects.author.id,
                 'issues': list(Issues.objects.filter(project_id=projects.id)),
             }
 
