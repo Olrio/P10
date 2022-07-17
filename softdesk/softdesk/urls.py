@@ -31,5 +31,5 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/', include(router.urls)),
     path('api/signup/', RegisterUserViewset.as_view(), name='signup'),
-    path('login/', TokenObtainPairView.as_view(), name='login'),
+    path('api/login/', TokenObtainPairView.as_view(), name='login'),
 ]
