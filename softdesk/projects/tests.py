@@ -107,14 +107,30 @@ class TestProjects(DataTest):
         self.assertFalse(project_initial.title == project_final.title)
 
     def test_delete(self):
+        # we create three different users (project_author, issue_author, issue_assignee)
+        # one project and one issue
         user = self.register('Tournesol', 'tryphon@herge.com')
+        user_author = self.register('Dupont', 'dupont@mail.com')
+        user_assignee = self.register('Seraphin_Lampion', 'lampion@assur.com')
         token = self.login(user)
         project = Projects.objects.create(title="Projet de Tournesol", author=user)
+        issue = Issues.objects.create(
+            title="Problème de titre",
+            desc="Il y a manifestement une grosse erreur dans le titre du projet",
+            tag="erreur de script",
+            project=project,
+            author=user_author,
+            assignee=user_assignee
+        )
+        # verify that project and issue are created
         self.assertTrue(Projects.objects.filter(title="Projet de Tournesol").exists())
+        self.assertTrue(Issues.objects.filter(title="Problème de titre").exists())
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
         response = self.client.delete(reverse('projects-detail', args=[project.pk]))
         self.assertEqual(response.status_code, 204)
+        # verify that project and issue are deleted
         self.assertFalse(Projects.objects.filter(title="Projet de Tournesol").exists())
+        self.assertFalse(Issues.objects.filter(title="Problème de titre").exists())
 
 
 
