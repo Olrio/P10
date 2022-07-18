@@ -27,7 +27,7 @@ class IssuesDetailSerializer(serializers.ModelSerializer):
 class ProjectsListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Projects
-        fields = ['id', 'title']
+        fields = ['id', 'title', 'description', 'type']
 
 
 class ProjectsDetailSerializer(serializers.ModelSerializer):
@@ -35,7 +35,7 @@ class ProjectsDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Projects
-        fields = ['id', 'title', 'issues']
+        fields = ['id', 'title', 'issues', 'description', 'type']
 
     def get_issues(self, instance):
         queryset = instance.issues.all()

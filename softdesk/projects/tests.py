@@ -12,12 +12,16 @@ class DataTest(APITestCase):
                 {
                     'id': project.id,
                     'title': project.title,
+                    'description': project.description,
+                    'type': project.type,
                 } for project in projects
             ]
         elif action == 'retrieve':
             return {
                 'id': projects.id,
                 'title': projects.title,
+                'description': projects.description,
+                'type': projects.type,
                 'issues': list(Issues.objects.filter(project_id=projects.id)),
             }
 
@@ -85,10 +89,19 @@ class TestProjects(DataTest):
     def test_update(self):
         user = self.register('Tournesol', 'tryphon@herge.com')
         token = self.login(user)
-        project_initial = Projects.objects.create(title="Projet de Thournysaule", author=user, id=3)
+        project_initial = Projects.objects.create(
+            title="Projet de Thournysaule",
+            author=user,
+            description="Le dernier projet totalement fou de l'ami Tryphon !",
+            type="Software",
+            id=3)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
-        response = self.client.patch(reverse(
-            'projects-detail', args=[project_initial.pk]), data={"title": "Projet de Tournesol"})
+        response = self.client.put(reverse(
+            'projects-detail', args=[project_initial.pk]), data={
+            "author": project_initial.author,
+            "description": project_initial.description,
+            "type": project_initial.type,
+            "title": "Projet de Tournesol"})
         project_final = Projects.objects.get(id=3)
         self.assertEqual(response.status_code, 200)
         self.assertFalse(project_initial.title == project_final.title)

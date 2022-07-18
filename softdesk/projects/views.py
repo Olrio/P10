@@ -19,7 +19,7 @@ class MultipleSerializerMixin:
 class ProjectsViewset(MultipleSerializerMixin, ModelViewSet):
     serializer_class = ProjectsListSerializer
     detail_serializer_class = ProjectsDetailSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
