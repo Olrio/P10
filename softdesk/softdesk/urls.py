@@ -15,21 +15,25 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework import routers
 from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
+from rest_framework_nested import routers
 
 from projects.views import ProjectsViewset, IssuesViewset
 from authentication.views import UserViewset, RegisterUserViewset
 
 router = routers.SimpleRouter()
 router.register('projects', ProjectsViewset, basename='projects')
-router.register('issues', IssuesViewset, basename='issues')
+
+projects_router = routers.NestedSimpleRouter(router, 'projects', lookup='project')
+projects_router.register('issues', IssuesViewset, basename='issues')
+
 router.register('user', UserViewset, basename='user')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/', include(router.urls)),
+    path('api/', include(projects_router.urls)),
     path('api/signup/', RegisterUserViewset.as_view(), name='signup'),
     path('api/login/', TokenObtainPairView.as_view(), name='login'),
 ]
