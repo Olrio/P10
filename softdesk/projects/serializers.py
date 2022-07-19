@@ -1,6 +1,37 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+from django.db  import IntegrityError
 
-from projects.models import Projects, Issues
+from projects.models import Projects, Issues, Contributors
+from django.contrib.auth.models import User
+from authentication.serializers import UserSerializer
+
+
+class ContributorsListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contributors
+        fields = ['id', 'user', 'role']
+
+    def create(self, validated_data):
+        try:
+            return super().create(validated_data)
+
+        except IntegrityError as error:
+            raise ValidationError(
+                {"unique constaint failed": 'This user is already a contributor to this project'}) from error
+
+
+class ContributorsDetailSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Contributors
+        fields = ['id', 'user', 'role']
+
+    def get_user(self, instance):
+        queryset = User.objects.filter(id=instance.user.id)
+        serializer = UserSerializer(queryset, many=True)
+        return serializer.data
 
 
 class IssuesListSerializer(serializers.ModelSerializer):

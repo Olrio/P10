@@ -29,6 +29,9 @@ class Contributors(models.Model):
                             choices=PERMISSION_CHOICES,
                             )
 
+    class Meta:
+        unique_together = ('user', 'project',)
+
 
 class Issues(models.Model):
     title = models.CharField(max_length=128)
