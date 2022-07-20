@@ -1,10 +1,19 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
 class Projects(models.Model):
     title = models.CharField(max_length=128)
     description = models.CharField(max_length=2048)
-    type = models.CharField(max_length=128)
+    TYPE_CHOICES = [
+        ('BACK_END', 'back-end'),
+        ('FRONT_END', 'front-end'),
+        ('IOS', 'iOS'),
+        ('ANDROID', 'Android')
+    ]
+    type = models.CharField(max_length=128,
+                            choices=TYPE_CHOICES,
+                            )
     author = models.ForeignKey(
         to=User,
         on_delete=models.CASCADE,

@@ -38,10 +38,12 @@ class ProjectsViewset(MultipleSerializerMixin, ModelViewSet):
 class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
     serializer_class = IssuesListSerializer
     detail_serializer_class = IssuesDetailSerializer
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Issues.objects.all()
+        current_project_id = self.request.parser_context['kwargs']['project_pk']
+        queryset = Issues.objects.filter(project__id=current_project_id)
+        return queryset
 
     def get_serializer_class(self):
         return super().get_serializer_class()
