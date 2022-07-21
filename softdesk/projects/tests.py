@@ -104,7 +104,7 @@ class TestProjects(DataTest):
         response = self.client.post(self.url_list, data={'title': 'Nouveau projet',
                                                          'author': user.id,
                                                          'description': 'RAS',
-                                                         'type': 'Software',
+                                                         'type': 'BACK_END',
                                                          })
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Projects.objects.count(), projects_count+1)
@@ -116,7 +116,7 @@ class TestProjects(DataTest):
             title="Projet de Thournysaule",
             author=user,
             description="Le dernier projet totalement fou de l'ami Tryphon !",
-            type="Software",
+            type="BACK_END",
             id=3)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
         response = self.client.put(reverse(
