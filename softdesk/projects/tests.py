@@ -48,6 +48,24 @@ class DataTest(APITestCase):
                     'role': contributors.role,
             }
 
+    def get_issues_data(self, issues, action):
+        if action == 'list':
+            return [
+                {
+                    'id': issue.id,
+                    'title': issue.title,
+                    'assignee': issue.assignee.id,
+                } for issue in issues
+            ]
+        elif action == 'retrieve':
+            return {
+                'id': issues.id,
+                'title': issues.title,
+                'author': self.get_user_data(User.objects.get(id=issues.author.id)),
+                'project': issues.project.id,
+                'assignee': issues.assignee.id,
+            }
+
     def register(self, name, mail):
         url = reverse('signup')
         resp = self.client.post(url, {
@@ -249,6 +267,95 @@ class TestContributors(DataTest):
         self.assertFalse(Contributors.objects.filter(id=22).exists())
 
 
+class TestIssues(DataTest):
+    url_list = reverse('issues-list', args=(1,))
+    url_detail = reverse('issues-detail', args=(1, 1))
+
+    def test_list(self):
+        user1 = self.register('Tournesol', 'tryphon@herge.com')
+        user2 = self.register('Haddock', 'archibald@herge.com')
+        token = self.login(user1)
+        project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
+        project2 = Projects.objects.create(title="Projet Test2", author_user_id=user2, id=2)
+        contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
+        contributors2 = Contributors.objects.create(user=user2, project=project2)
+        issue1 = Issues.objects.create(title="Big Bug 1 ?", author=user1, id=1, assignee=user2, project=project1)
+        issue2 = Issues.objects.create(title="Big Bug 2 ?", author=user1, id=2, assignee=user2, project=project2)
+        issue3 = Issues.objects.create(title="Big Bug 3 ?", author=user2, id=3, assignee=user2, project=project1)
+        issue4 = Issues.objects.create(title="Big Bug 4 ?", author=user2, id=4, assignee=user2, project=project2)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
+        response = self.client.get(self.url_list)
+        self.assertEqual(response.status_code, 200)
+        expected = self.get_issues_data(Issues.objects.filter(project=project1), 'list')
+        expected_false = self.get_issues_data(Issues.objects.filter(project=project2), 'list')
+        self.assertEqual(expected, response.json()['results'])
+        self.assertNotEqual(expected_false, response.json()['results'])
+
+    def test_detail(self):
+        user1 = self.register('Tournesol', 'tryphon@herge.com')
+        user2 = self.register('Haddock', 'archibald@herge.com')
+        token = self.login(user1)
+        project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
+        project2 = Projects.objects.create(title="Projet Test2", author_user_id=user2, id=2)
+        contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
+        contributors2 = Contributors.objects.create(user=user2, project=project2)
+        issue1 = Issues.objects.create(title="Big Bug 1 ?", author=user1, id=1, assignee=user2, project=project1)
+        issue2 = Issues.objects.create(title="Big Bug 2 ?", author=user2, id=2, assignee=user2, project=project2)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
+        response = self.client.get(self.url_detail)
+        self.assertEqual(response.status_code, 200)
+        expected = self.get_issues_data(Issues.objects.get(pk=issue1.pk), 'retrieve')
+        expected_false = self.get_issues_data(Issues.objects.get(pk=issue2.pk), 'retrieve')
+        self.assertEqual(expected, response.json())
+        self.assertNotEqual(expected_false, response.json())
+
+    def test_create(self):
+        user1 = self.register('Tournesol', 'tryphon@herge.com')
+        user2 = self.register('Haddock', 'archibald@herge.com')
+        token = self.login(user1)
+        project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
+        contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
+        issue1 = Issues.objects.create(title="Big Bug 1 ?", author=user1, id=1, assignee=user2, project=project1)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
+        issues_count = Issues.objects.count()
+        response = self.client.post(self.url_list, data={'title': "Big Bug 2",
+                                                         'author': user2,
+                                                         'id': 2,
+                                                         'assignne': user2,
+                                                         "project": project1
+                                                         })
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Issues.objects.count(), issues_count+1)
+
+    def test_update(self):
+        user1 = self.register('Tournesol', 'tryphon@herge.com')
+        user2 = self.register('Haddock', 'archibald@herge.com')
+        token = self.login(user1)
+        project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
+        contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
+        issue1 = Issues.objects.create(title="Big Bug 1 ?", author=user1, id=1, assignee=user2, project=project1)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
+        issue1_initial = Issues.objects.get(id=1)
+        response = self.client.put(reverse(
+            'issues-detail', args=(1, issue1_initial.pk)), data={
+            "title": "New title",
+        })
+        issue1_final = Issues.objects.get(id=1)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(issue1_initial.title, issue1_final.title)
+
+    def test_delete(self):
+        user1 = self.register('Tournesol', 'tryphon@herge.com')
+        user2 = self.register('Haddock', 'archibald@herge.com')
+        project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
+        contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
+        issue1 = Issues.objects.create(title="Big Bug 1 ?", author=user1, id=1, assignee=user2, project=project1)
+        token = self.login(user1)
+        self.assertTrue(Issues.objects.filter(id=1).exists())
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
+        response = self.client.delete(reverse('issues-detail', args=(1, issue1.pk)))
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(Issues.objects.filter(id=1).exists())
 
 
 

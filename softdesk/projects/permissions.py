@@ -37,3 +37,21 @@ class CanModifyContributors(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return request.user == Projects.objects.get(id=request.parser_context['kwargs']['project_pk']).author_user_id
+
+
+class CanReadIssues(BasePermission):
+    message = "Sorry, you don't have permission to access this project and its related informations." \
+              "You're not a contributor to this project"
+
+    def has_object_permission(self, request, view, obj):
+        return Contributors.objects.filter(
+            project=Projects.objects.get(id=request.parser_context['kwargs']['project_pk']),
+            user=request.user).exists()
+
+
+class CanModifyIssues(BasePermission):
+    message = "Sorry, you don't have permission to update/delete this issue." \
+              "You're not the author of this issue"
+
+    def has_object_permission(self, request, view, obj):
+        return request.user == obj.author

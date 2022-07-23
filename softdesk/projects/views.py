@@ -8,7 +8,8 @@ from rest_framework.exceptions import NotFound
 from projects.serializers import ProjectsListSerializer, \
     ProjectsDetailSerializer, IssuesListSerializer, IssuesDetailSerializer, \
     ContributorsListSerializer, ContributorsDetailSerializer
-from projects.permissions import IsAuthenticated, IsProjectAuthor, IsProjectContributor, CanReadContributors, CanModifyContributors
+from projects.permissions import IsAuthenticated, IsProjectAuthor, IsProjectContributor,\
+    CanReadContributors, CanModifyContributors, CanReadIssues, CanModifyIssues
 
 
 
@@ -45,17 +46,24 @@ class ProjectsViewset(MultipleSerializerMixin, ModelViewSet):
 class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
     serializer_class = IssuesListSerializer
     detail_serializer_class = IssuesDetailSerializer
-    permission_classes = [IsAuthenticated, IsProjectAuthor]
 
     def get_queryset(self):
-        try:
-            self.check_object_permissions(self.request,
-                                          obj=Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk']))
-            current_project_id = self.request.parser_context['kwargs']['project_pk']
-            queryset = Issues.objects.filter(project__id=current_project_id)
-            return queryset
-        except ObjectDoesNotExist:
-            raise NotFound(detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
+        if 'pk' not in self.request.parser_context['kwargs']:
+            self.permission_classes = [IsAuthenticated, CanReadIssues]
+            try:
+                self.check_object_permissions(self.request,
+                                              obj=Issues.objects.filter(project__id=self.request.parser_context['kwargs']['project_pk']))
+                queryset = Issues.objects.filter(project__id=self.request.parser_context['kwargs']['project_pk'])
+                return queryset
+            except ObjectDoesNotExist:
+                raise NotFound(detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
+        else:
+            self.permission_classes = [IsAuthenticated, CanModifyIssues]
+            try:
+                queryset = Issues.objects.filter(id=self.request.parser_context['kwargs']['pk'])
+                return queryset
+            except ObjectDoesNotExist:
+                raise NotFound(detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
 
     def get_serializer_class(self):
         return super().get_serializer_class()
