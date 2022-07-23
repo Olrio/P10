@@ -3,7 +3,7 @@ from rest_framework.exceptions import ValidationError
 from django.db  import IntegrityError
 
 from projects.models import Projects, Issues, Contributors
-from django.contrib.auth.models import User
+from authentication.models import User
 from authentication.serializers import UserSerializer
 
 

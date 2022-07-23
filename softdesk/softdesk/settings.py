@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
-
+import datetime
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'softdesk',
     'projects',
+    'authentication',
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
@@ -144,3 +145,9 @@ REST_FRAMEWORK = {
             'rest_framework_simplejwt.authentication.JWTAuthentication',
         ),
 }
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=2),
+}
+
+AUTH_USER_MODEL = 'authentication.User'

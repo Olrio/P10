@@ -2,10 +2,12 @@ from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_framework.decorators import action
 from projects.models import Projects, Issues, Contributors
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
+from rest_framework.exceptions import NotFound
 from projects.serializers import ProjectsListSerializer, \
     ProjectsDetailSerializer, IssuesListSerializer, IssuesDetailSerializer, \
     ContributorsListSerializer, ContributorsDetailSerializer
-from projects.permissions import IsAuthenticated, IsProjectAuthor, IsProjectContributor
+from projects.permissions import IsAuthenticated, IsProjectAuthor, IsProjectContributor, CanReadContributors, CanModifyContributors
 
 
 
@@ -32,12 +34,11 @@ class ProjectsViewset(MultipleSerializerMixin, ModelViewSet):
         )
 
     def get_queryset(self):
-        # IsProjectAuthor is only related to detail view, i.e. url contains kwargs corresponding to project.id
-        if self.request.parser_context['kwargs']['pk']:
-            self.check_object_permissions(self.request, obj=Contributors.objects.filter(
-                project__id=self.request.parser_context['kwargs']['pk']))
-            return Projects.objects.filter(id=self.request.parser_context['kwargs']['pk'])
-        return Projects.objects.filter(author=self.request.user.id)
+        if not self.request.parser_context['kwargs']:
+            return Projects.objects.filter(contributors__user=self.request.user)
+        elif self.request.parser_context['kwargs']['pk']:
+            queryset = Projects.objects.filter(id=self.request.parser_context['kwargs']['pk'])
+            return queryset
 
 
 class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
@@ -59,14 +60,26 @@ class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
 class ContributorsViewset(MultipleSerializerMixin, ModelViewSet):
     serializer_class = ContributorsListSerializer
     detail_serializer_class = ContributorsDetailSerializer
-    permission_classes = [IsAuthenticated, IsProjectAuthor]
 
     def get_queryset(self):
-        self.check_object_permissions(self.request,
-                                      obj=Projects.objects.filter(id=self.request.parser_context['kwargs']['project_pk']))
-        current_project_id = self.request.parser_context['kwargs']['project_pk']
-        queryset = Contributors.objects.filter(project__id=current_project_id, project__author=self.request.user.id)
-        return queryset
+        if 'pk' not in self.request.parser_context['kwargs'].keys():
+            self.permission_classes = [IsAuthenticated, CanReadContributors]
+            self.check_object_permissions(self.request, Contributors.objects.filter(
+                project__id=self.request.parser_context['kwargs']['project_pk']))
+            return Contributors.objects.filter(project__id=self.request.parser_context['kwargs']['project_pk'])
+        elif 'pk' in self.request.parser_context['kwargs'].keys():
+            self.permission_classes = [IsAuthenticated, CanModifyContributors]
+            queryset = Contributors.objects.filter(
+                id=self.request.parser_context['kwargs']['pk'],
+                project=self.request.parser_context['kwargs']['project_pk']
+            )
+            return queryset
 
     def perform_create(self, serializer):
-        serializer.save(project=Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk']))
+        self.permission_classes = [IsAuthenticated, IsProjectAuthor]
+        try:
+            self.check_object_permissions(self.request, Projects.objects.get(
+                id=self.request.parser_context['kwargs']['project_pk']))
+            serializer.save(project=Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk']))
+        except ObjectDoesNotExist:
+            raise NotFound(detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
