@@ -2,6 +2,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_framework.decorators import action
 from projects.models import Projects, Issues, Contributors
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.exceptions import NotFound
 from projects.serializers import ProjectsListSerializer, \
@@ -26,7 +27,7 @@ class ProjectsViewset(MultipleSerializerMixin, ModelViewSet):
     permission_classes = [IsAuthenticated, IsProjectContributor]
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        serializer.save(author_user_id=self.request.user)
         Contributors.objects.create(
             user=self.request.user,
             project=Projects.objects.get(id=serializer.data['id']),
@@ -47,14 +48,27 @@ class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
     permission_classes = [IsAuthenticated, IsProjectAuthor]
 
     def get_queryset(self):
-        self.check_object_permissions(self.request,
-                                      obj=Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk']))
-        current_project_id = self.request.parser_context['kwargs']['project_pk']
-        queryset = Issues.objects.filter(project__id=current_project_id)
-        return queryset
+        try:
+            self.check_object_permissions(self.request,
+                                          obj=Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk']))
+            current_project_id = self.request.parser_context['kwargs']['project_pk']
+            queryset = Issues.objects.filter(project__id=current_project_id)
+            return queryset
+        except ObjectDoesNotExist:
+            raise NotFound(detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
 
     def get_serializer_class(self):
         return super().get_serializer_class()
+
+    def perform_create(self, serializer):
+        self.permission_classes = [IsAuthenticated, IsProjectContributor]
+        try:
+            self.check_object_permissions(self.request, Projects.objects.get(
+                id=self.request.parser_context['kwargs']['project_pk']))
+            serializer.save(author=Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk']).author_user_id,
+                            project=Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk']))
+        except ObjectDoesNotExist:
+            raise NotFound(detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
 
 
 class ContributorsViewset(MultipleSerializerMixin, ModelViewSet):

@@ -38,20 +38,30 @@ class IssuesListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Issues
-        fields = ['id', 'title', 'project', 'assignee', 'author']
+        fields = ['id', 'title', 'assignee']
+        read_only_fields = ['author']
+
+    def validate(self, data):
+        if 'assignee' in data.keys():
+            if not Contributors.objects.filter(user=data['assignee'], project=Projects.objects.get(id=self.context['request'].parser_context['kwargs']['project_pk'])).exists():
+                raise serializers.ValidationError(
+                    {'Assignee case error': 'assignee must be a contributor in this project'})
+        else:
+            data['assignee'] = self.context['request'].user
+        return data
 
 
 class IssuesDetailSerializer(serializers.ModelSerializer):
-    project = serializers.SerializerMethodField()
     author = serializers.SerializerMethodField()
 
     class Meta:
         model = Issues
-        fields = ['id', 'title', 'project', 'assignee', 'author']
+        fields = ['id', 'title', 'assignee', 'author', 'project']
+        read_only_fields = ['author', 'project']
 
-    def get_project(self, instance):
-        queryset = Projects.objects.filter(id=instance.project.id)
-        serializer = ProjectsListSerializer(queryset, many=True)
+    def get_author(self, instance):
+        queryset = User.objects.filter(id=instance.author.id)
+        serializer = UserSerializer(queryset, many=True)
         return serializer.data
 
 

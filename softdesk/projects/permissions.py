@@ -12,7 +12,7 @@ class IsProjectAuthor(BasePermission):
               "You're not the author of this project"
 
     def has_object_permission(self, request, view, obj):
-        return obj.author == request.user
+        return obj.author_user_id == request.user
 
 
 class IsProjectContributor(BasePermission):
@@ -36,4 +36,4 @@ class CanModifyContributors(BasePermission):
               "You're not the author of this project"
 
     def has_object_permission(self, request, view, obj):
-        return request.user == Projects.objects.get(id=request.parser_context['kwargs']['project_pk']).author
+        return request.user == Projects.objects.get(id=request.parser_context['kwargs']['project_pk']).author_user_id

@@ -1,7 +1,7 @@
 from django.urls import reverse_lazy, reverse
 from rest_framework.test import APITestCase
 from projects.models import Projects, Issues, Contributors
-from django.contrib.auth.models import User
+from authentication.models import User
 
 
 class DataTest(APITestCase):
@@ -77,20 +77,24 @@ class TestProjects(DataTest):
         user1 = self.register('Tournesol', 'tryphon@herge.com')
         user2 = self.register('Haddock', 'archibald@herge.com')
         token = self.login(user2)
-        project1 = Projects.objects.create(title="Projet Test1", author=user1, id=1)
-        project2 = Projects.objects.create(title="Projet Test2", author=user1, id=2)
-        project3 = Projects.objects.create(title="Projet Test3", author=user2, id=3)
+        project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
+        Contributors.objects.create(user=user1, project=project1)
+        project2 = Projects.objects.create(title="Projet Test2", author_user_id=user1, id=2)
+        Contributors.objects.create(user=user1, project=project2)
+        project3 = Projects.objects.create(title="Projet Test3", author_user_id=user2, id=3)
+        Contributors.objects.create(user=user2, project=project3)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
         response = self.client.get(self.url_list)
         self.assertEqual(response.status_code, 200)
-        expected = self.get_project_data(Projects.objects.filter(author=user2.id), 'list')
+        expected = self.get_project_data(Projects.objects.filter(author_user_id=user2), 'list')
         self.assertEqual(expected, response.json()['results'])
 
     def test_detail(self):
         user = self.register('Tournesol', 'tryphon@herge.com')
         token = self.login(user)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
-        project = Projects.objects.create(title="Projet Test", author=user, id=3)
+        project = Projects.objects.create(title="Projet Test", author_user_id=user, id=3)
+        Contributors.objects.create(user=user, project=project)
         response = self.client.get(reverse('projects-detail', kwargs={'pk': project.pk}))
         self.assertEqual(response.status_code, 200)
         expected = self.get_project_data(Projects.objects.get(pk=project.pk), 'retrieve')
@@ -114,14 +118,18 @@ class TestProjects(DataTest):
         token = self.login(user)
         project_initial = Projects.objects.create(
             title="Projet de Thournysaule",
-            author=user,
+            author_user_id=user,
             description="Le dernier projet totalement fou de l'ami Tryphon !",
             type="BACK_END",
             id=3)
+        Contributors.objects.create(
+            user=user,
+            project=project_initial
+        )
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
         response = self.client.put(reverse(
             'projects-detail', args=[project_initial.pk]), data={
-            "author": project_initial.author,
+            "author": project_initial.author_user_id,
             "description": project_initial.description,
             "type": project_initial.type,
             "title": "Projet de Tournesol"})
@@ -136,7 +144,8 @@ class TestProjects(DataTest):
         user_author = self.register('Dupont', 'dupont@mail.com')
         user_assignee = self.register('Seraphin_Lampion', 'lampion@assur.com')
         token = self.login(user)
-        project = Projects.objects.create(title="Projet de Tournesol", author=user)
+        project = Projects.objects.create(title="Projet de Tournesol", author_user_id=user)
+        Contributors.objects.create(user=user, project=project)
         issue = Issues.objects.create(
             title="Problème de titre",
             desc="Il y a manifestement une grosse erreur dans le titre du projet",
@@ -164,8 +173,8 @@ class TestContributors(DataTest):
         user1 = self.register('Tournesol', 'tryphon@herge.com')
         user2 = self.register('Haddock', 'archibald@herge.com')
         token = self.login(user1)
-        project1 = Projects.objects.create(title="Projet Test1", author=user1, id=1)
-        project2 = Projects.objects.create(title="Projet Test2", author=user2, id=2)
+        project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
+        project2 = Projects.objects.create(title="Projet Test2", author_user_id=user2, id=2)
         contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
         contributors2 = Contributors.objects.create(user=user2, project=project2)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
@@ -180,8 +189,8 @@ class TestContributors(DataTest):
         user1 = self.register('Tournesol', 'tryphon@herge.com')
         user2 = self.register('Haddock', 'archibald@herge.com')
         token = self.login(user1)
-        project1 = Projects.objects.create(title="Projet Test1", author=user1, id=1)
-        project2 = Projects.objects.create(title="Projet Test2", author=user2, id=2)
+        project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
+        project2 = Projects.objects.create(title="Projet Test2", author_user_id=user2, id=2)
         contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
         contributors2 = Contributors.objects.create(user=user2, project=project2)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
@@ -196,7 +205,7 @@ class TestContributors(DataTest):
         user1 = self.register('Tournesol', 'tryphon@herge.com')
         user2 = self.register('Haddock', 'archibald@herge.com')
         token = self.login(user1)
-        project1 = Projects.objects.create(title="Projet Test1", author=user1, id=1)
+        project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
         contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
         contributors_count = Contributors.objects.count()
@@ -210,7 +219,7 @@ class TestContributors(DataTest):
         user1 = self.register('Tournesol', 'tryphon@herge.com')
         user2 = self.register('Haddock', 'archibald@herge.com')
         token = self.login(user1)
-        project1 = Projects.objects.create(title="Projet Test1", author=user1, id=1)
+        project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
         contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
         contributors2 = Contributors.objects.create(user=user2, project=project1, role='AUTHOR', id=22)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
@@ -227,7 +236,7 @@ class TestContributors(DataTest):
     def test_delete(self):
         user1 = self.register('Tournesol', 'tryphon@herge.com')
         user2 = self.register('Haddock', 'archibald@herge.com')
-        project1 = Projects.objects.create(title="Projet Test1", author=user1, id=1)
+        project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
         contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
         contributors2 = Contributors.objects.create(user=user2, project=project1, role='AUTHOR', id=22)
         token = self.login(user1)

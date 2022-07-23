@@ -14,7 +14,7 @@ class Projects(models.Model):
     type = models.CharField(max_length=128,
                             choices=TYPE_CHOICES,
                             )
-    author = models.ForeignKey(
+    author_user_id = models.ForeignKey(
         to=User,
         on_delete=models.CASCADE,
     )
@@ -58,6 +58,7 @@ class Issues(models.Model):
     )
     assignee = models.ForeignKey(
         to=User,
+        default=author,
         on_delete=models.CASCADE,
         related_name="assignee"
     )
