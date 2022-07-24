@@ -36,7 +36,7 @@ class ProjectsViewset(MultipleSerializerMixin, ModelViewSet):
 
     def get_queryset(self):
         if not self.request.parser_context['kwargs']:
-            self.permission_classes = [IsAuthenticated, IsProjectContributor]
+            self.permission_classes = [IsAuthenticated]
             return Projects.objects.filter(contributors__user=self.request.user)
         elif self.request.parser_context['kwargs']['pk']:
             self.permission_classes = [IsAuthenticated, IsProjectAuthor]
