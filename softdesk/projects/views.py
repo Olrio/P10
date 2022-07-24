@@ -25,7 +25,6 @@ class MultipleSerializerMixin:
 class ProjectsViewset(MultipleSerializerMixin, ModelViewSet):
     serializer_class = ProjectsListSerializer
     detail_serializer_class = ProjectsDetailSerializer
-    permission_classes = [IsAuthenticated, IsProjectContributor]
 
     def perform_create(self, serializer):
         serializer.save(author_user_id=self.request.user)
@@ -37,8 +36,10 @@ class ProjectsViewset(MultipleSerializerMixin, ModelViewSet):
 
     def get_queryset(self):
         if not self.request.parser_context['kwargs']:
+            self.permission_classes = [IsAuthenticated, IsProjectContributor]
             return Projects.objects.filter(contributors__user=self.request.user)
         elif self.request.parser_context['kwargs']['pk']:
+            self.permission_classes = [IsAuthenticated, IsProjectAuthor]
             queryset = Projects.objects.filter(id=self.request.parser_context['kwargs']['pk'])
             return queryset
 
