@@ -6,6 +6,9 @@ from authentication.models import User
 
 class DataTest(APITestCase):
 
+    def format_datetime(self, value):
+        return value.strftime("%Y/%m/%d %H:%M")
+
     def get_user_data(self, user):
         return [{
             'id': user.id,
@@ -56,6 +59,10 @@ class DataTest(APITestCase):
                     'title': issue.title,
                     'assignee_user_id': issue.assignee_user_id.id,
                     'author_user_id': issue.author_user_id.id,
+                    'tag': issue.tag,
+                    'priority': issue.priority,
+                    'status': issue.status,
+                    'created_time': self.format_datetime(issue.created_time),
                 } for issue in issues
             ]
         elif action == 'retrieve':
@@ -339,7 +346,9 @@ class TestIssues(DataTest):
                                                          'author_user_id': user2,
                                                          'id': 2,
                                                          'assignne_user_id': user2,
-                                                         "project_id": project1
+                                                         "project_id": project1,
+                                                         "tag": "BUG",
+                                                         "priority": "MEDIUM",
                                                          })
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Issues.objects.count(), issues_count+1)
@@ -350,12 +359,19 @@ class TestIssues(DataTest):
         token = self.login(user1)
         project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
         contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
-        issue1 = Issues.objects.create(title="Big Bug 1 ?", author_user_id=user1, id=1, assignee_user_id=user2, project_id=project1)
+        issue1 = Issues.objects.create(title="Big Bug 1 ?",
+                                       author_user_id=user1,
+                                       id=1,
+                                       assignee_user_id=user2,
+                                       project_id=project1,
+                                       tag='BUG')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
         issue1_initial = Issues.objects.get(id=1)
         response = self.client.put(reverse(
             'issues-detail', args=(1, issue1_initial.pk)), data={
             "title": "New title",
+            "tag": "BUG",
+            "priority": "MEDIUM",
         })
         issue1_final = Issues.objects.get(id=1)
         self.assertEqual(response.status_code, 200)

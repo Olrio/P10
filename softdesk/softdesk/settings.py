@@ -144,6 +144,7 @@ REST_FRAMEWORK = {
         (
             'rest_framework_simplejwt.authentication.JWTAuthentication',
         ),
+    'DATETIME_FORMAT': '%Y/%m/%d %H:%M',
 }
 
 SIMPLE_JWT = {
