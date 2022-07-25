@@ -53,8 +53,8 @@ class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
             self.permission_classes = [IsAuthenticated, CanReadIssues]
             try:
                 self.check_object_permissions(self.request,
-                                              obj=Issues.objects.filter(project__id=self.request.parser_context['kwargs']['project_pk']))
-                queryset = Issues.objects.filter(project__id=self.request.parser_context['kwargs']['project_pk'])
+                                              obj=Issues.objects.filter(project_id__id=self.request.parser_context['kwargs']['project_pk']))
+                queryset = Issues.objects.filter(project_id__id=self.request.parser_context['kwargs']['project_pk'])
                 return queryset
             except ObjectDoesNotExist:
                 raise NotFound(detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
@@ -74,8 +74,8 @@ class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
         try:
             self.check_object_permissions(self.request, Projects.objects.get(
                 id=self.request.parser_context['kwargs']['project_pk']))
-            serializer.save(author=Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk']).author_user_id,
-                            project=Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk']))
+            serializer.save(author_user_id=Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk']).author_user_id,
+                            project_id=Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk']))
         except ObjectDoesNotExist:
             raise NotFound(detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
 

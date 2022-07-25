@@ -54,16 +54,16 @@ class DataTest(APITestCase):
                 {
                     'id': issue.id,
                     'title': issue.title,
-                    'assignee': issue.assignee.id,
+                    'assignee_user_id': issue.assignee_user_id.id,
                 } for issue in issues
             ]
         elif action == 'retrieve':
             return {
                 'id': issues.id,
                 'title': issues.title,
-                'author': self.get_user_data(User.objects.get(id=issues.author.id)),
-                'project': issues.project.id,
-                'assignee': issues.assignee.id,
+                'author_user_id': self.get_user_data(User.objects.get(id=issues.author_user_id.id)),
+                'project_id': issues.project_id.id,
+                'assignee_user_id': issues.assignee_user_id.id,
             }
 
     def register(self, name, mail):
@@ -183,9 +183,9 @@ class TestProjects(DataTest):
             title="Problème de titre",
             desc="Il y a manifestement une grosse erreur dans le titre du projet",
             tag="erreur de script",
-            project=project,
-            author=user_author,
-            assignee=user_assignee
+            project_id=project,
+            author_user_id=user_author,
+            assignee_user_id=user_assignee
         )
         # verify that project and issue are created
         self.assertTrue(Projects.objects.filter(title="Projet de Tournesol").exists())
@@ -295,15 +295,15 @@ class TestIssues(DataTest):
         project2 = Projects.objects.create(title="Projet Test2", author_user_id=user2, id=2)
         contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
         contributors2 = Contributors.objects.create(user=user2, project=project2)
-        issue1 = Issues.objects.create(title="Big Bug 1 ?", author=user1, id=1, assignee=user2, project=project1)
-        issue2 = Issues.objects.create(title="Big Bug 2 ?", author=user1, id=2, assignee=user2, project=project2)
-        issue3 = Issues.objects.create(title="Big Bug 3 ?", author=user2, id=3, assignee=user2, project=project1)
-        issue4 = Issues.objects.create(title="Big Bug 4 ?", author=user2, id=4, assignee=user2, project=project2)
+        issue1 = Issues.objects.create(title="Big Bug 1 ?", author_user_id=user1, id=1, assignee_user_id=user2, project_id=project1)
+        issue2 = Issues.objects.create(title="Big Bug 2 ?", author_user_id=user1, id=2, assignee_user_id=user2, project_id=project2)
+        issue3 = Issues.objects.create(title="Big Bug 3 ?", author_user_id=user2, id=3, assignee_user_id=user2, project_id=project1)
+        issue4 = Issues.objects.create(title="Big Bug 4 ?", author_user_id=user2, id=4, assignee_user_id=user2, project_id=project2)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
         response = self.client.get(self.url_list)
         self.assertEqual(response.status_code, 200)
-        expected = self.get_issues_data(Issues.objects.filter(project=project1), 'list')
-        expected_false = self.get_issues_data(Issues.objects.filter(project=project2), 'list')
+        expected = self.get_issues_data(Issues.objects.filter(project_id=project1), 'list')
+        expected_false = self.get_issues_data(Issues.objects.filter(project_id=project2), 'list')
         self.assertEqual(expected, response.json()['results'])
         self.assertNotEqual(expected_false, response.json()['results'])
 
@@ -315,8 +315,8 @@ class TestIssues(DataTest):
         project2 = Projects.objects.create(title="Projet Test2", author_user_id=user2, id=2)
         contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
         contributors2 = Contributors.objects.create(user=user2, project=project2)
-        issue1 = Issues.objects.create(title="Big Bug 1 ?", author=user1, id=1, assignee=user2, project=project1)
-        issue2 = Issues.objects.create(title="Big Bug 2 ?", author=user2, id=2, assignee=user2, project=project2)
+        issue1 = Issues.objects.create(title="Big Bug 1 ?", author_user_id=user1, id=1, assignee_user_id=user2, project_id=project1)
+        issue2 = Issues.objects.create(title="Big Bug 2 ?", author_user_id=user2, id=2, assignee_user_id=user2, project_id=project2)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
         response = self.client.get(self.url_detail)
         self.assertEqual(response.status_code, 200)
@@ -331,14 +331,14 @@ class TestIssues(DataTest):
         token = self.login(user1)
         project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
         contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
-        issue1 = Issues.objects.create(title="Big Bug 1 ?", author=user1, id=1, assignee=user2, project=project1)
+        issue1 = Issues.objects.create(title="Big Bug 1 ?", author_user_id=user1, id=1, assignee_user_id=user2, project_id=project1)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
         issues_count = Issues.objects.count()
         response = self.client.post(self.url_list, data={'title': "Big Bug 2",
-                                                         'author': user2,
+                                                         'author_user_id': user2,
                                                          'id': 2,
-                                                         'assignne': user2,
-                                                         "project": project1
+                                                         'assignne_user_id': user2,
+                                                         "project_id": project1
                                                          })
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Issues.objects.count(), issues_count+1)
@@ -349,7 +349,7 @@ class TestIssues(DataTest):
         token = self.login(user1)
         project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
         contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
-        issue1 = Issues.objects.create(title="Big Bug 1 ?", author=user1, id=1, assignee=user2, project=project1)
+        issue1 = Issues.objects.create(title="Big Bug 1 ?", author_user_id=user1, id=1, assignee_user_id=user2, project_id=project1)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
         issue1_initial = Issues.objects.get(id=1)
         response = self.client.put(reverse(
@@ -365,7 +365,7 @@ class TestIssues(DataTest):
         user2 = self.register('Haddock', 'archibald@herge.com')
         project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
         contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
-        issue1 = Issues.objects.create(title="Big Bug 1 ?", author=user1, id=1, assignee=user2, project=project1)
+        issue1 = Issues.objects.create(title="Big Bug 1 ?", author_user_id=user1, id=1, assignee_user_id=user2, project_id=project1)
         token = self.login(user1)
         self.assertTrue(Issues.objects.filter(id=1).exists())
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])

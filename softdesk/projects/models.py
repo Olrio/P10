@@ -45,20 +45,40 @@ class Contributors(models.Model):
 class Issues(models.Model):
     title = models.CharField(max_length=128)
     desc = models.CharField(max_length=2048)
-    tag = models.CharField(max_length=128)
-    priority = models.CharField(max_length=128)
-    project = models.ForeignKey(
+    TAG_CHOICES = [
+        ('BUG', 'Bug'),
+        ('IMPROVEMENT', 'Amélioration'),
+        ('TASK', 'Tâche')
+    ]
+    tag = models.CharField(max_length=128,
+                           choices=TAG_CHOICES,)
+    PRIORITY_LEVEL = [
+        ('LOW', 'Faible'),
+        ('MEDIUM', 'Moyenne'),
+        ('HIGH', 'Elevée')
+    ]
+    priority = models.CharField(max_length=128,
+                                choices=PRIORITY_LEVEL,)
+    STATUS = [
+        ('TO_DO', 'A faire'),
+        ('IN PROGRESS', 'En cours'),
+        ('CLOSED', 'Terminé')
+    ]
+    status = models.CharField(max_length=128,
+                              choices=STATUS,
+                              default='TO_DO')
+    project_id = models.ForeignKey(
         to=Projects,
         on_delete=models.CASCADE,
         related_name="issues")
-    author = models.ForeignKey(
+    author_user_id = models.ForeignKey(
         to=User,
         on_delete=models.CASCADE,
         related_name="author"
     )
-    assignee = models.ForeignKey(
+    assignee_user_id = models.ForeignKey(
         to=User,
-        default=author,
+        default=author_user_id,
         on_delete=models.CASCADE,
         related_name="assignee"
     )

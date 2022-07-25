@@ -54,4 +54,4 @@ class CanModifyIssues(BasePermission):
               "You're not the author of this issue"
 
     def has_object_permission(self, request, view, obj):
-        return request.user == obj.author
+        return request.user == obj.author_user_id
