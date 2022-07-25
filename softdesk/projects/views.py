@@ -1,15 +1,12 @@
-from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
-from rest_framework.decorators import action
+from rest_framework.viewsets import ModelViewSet
 from projects.models import Projects, Issues, Contributors
-from django.contrib.auth.models import User
-from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.exceptions import NotFound
 from projects.serializers import ProjectsListSerializer, \
     ProjectsDetailSerializer, IssuesListSerializer, IssuesDetailSerializer, \
     ContributorsListSerializer, ContributorsDetailSerializer
 from projects.permissions import IsAuthenticated, IsProjectAuthor, IsProjectContributor,\
-    CanReadContributors, CanModifyContributors, CanReadIssues, CanModifyIssues
+    CanReadContributors, CanModifyContributors, CanReadIssues, CanModifyIssues, IsIssueInThisProject
 
 
 
@@ -59,12 +56,9 @@ class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
             except ObjectDoesNotExist:
                 raise NotFound(detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
         else:
-            self.permission_classes = [IsAuthenticated, CanModifyIssues]
-            try:
-                queryset = Issues.objects.filter(id=self.request.parser_context['kwargs']['pk'])
-                return queryset
-            except ObjectDoesNotExist:
-                raise NotFound(detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
+            self.permission_classes = [IsAuthenticated, IsIssueInThisProject, CanModifyIssues]
+            queryset = Issues.objects.filter(id=self.request.parser_context['kwargs']['pk'])
+            return queryset
 
     def get_serializer_class(self):
         return super().get_serializer_class()

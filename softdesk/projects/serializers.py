@@ -38,7 +38,7 @@ class IssuesListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Issues
-        fields = ['id', 'title', 'assignee_user_id']
+        fields = ['id', 'title', 'assignee_user_id', 'author_user_id']
         read_only_fields = ['author_user_id']
 
     def validate(self, data):

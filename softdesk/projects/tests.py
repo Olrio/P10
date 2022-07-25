@@ -55,6 +55,7 @@ class DataTest(APITestCase):
                     'id': issue.id,
                     'title': issue.title,
                     'assignee_user_id': issue.assignee_user_id.id,
+                    'author_user_id': issue.author_user_id.id,
                 } for issue in issues
             ]
         elif action == 'retrieve':

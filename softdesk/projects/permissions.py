@@ -1,5 +1,8 @@
 from rest_framework.permissions import BasePermission
 from projects.models import Contributors, Projects
+from django.core.exceptions import ObjectDoesNotExist
+from rest_framework.exceptions import NotFound
+
 
 
 class IsAuthenticated(BasePermission):
@@ -50,8 +53,19 @@ class CanReadIssues(BasePermission):
 
 
 class CanModifyIssues(BasePermission):
-    message = "Sorry, you don't have permission to update/delete this issue." \
+    message = "Sorry, you don't have permission to update or delete this issue." \
               "You're not the author of this issue"
 
     def has_object_permission(self, request, view, obj):
         return request.user == obj.author_user_id
+
+
+class IsIssueInThisProject(BasePermission):
+    message = "This issue isn't related to this project"
+
+    def has_object_permission(self, request, view, obj):
+        try:
+            Projects.objects.get(id=request.parser_context['kwargs']['project_pk'])
+        except ObjectDoesNotExist:
+            raise NotFound(detail=f"Sorry, project {request.parser_context['kwargs']['project_pk']} doesn't exist")
+        return obj.project_id.id == int(request.parser_context['kwargs']['project_pk'])
