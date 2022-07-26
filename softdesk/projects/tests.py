@@ -1,6 +1,6 @@
 from django.urls import reverse_lazy, reverse
 from rest_framework.test import APITestCase
-from projects.models import Projects, Issues, Contributors
+from projects.models import Projects, Issues, Contributors, Comments
 from authentication.models import User
 
 
@@ -72,6 +72,26 @@ class DataTest(APITestCase):
                 'author_user_id': self.get_user_data(User.objects.get(id=issues.author_user_id.id)),
                 'project_id': issues.project_id.id,
                 'assignee_user_id': issues.assignee_user_id.id,
+            }
+
+    def get_comments_data(self, comments, action):
+        if action == 'list':
+            return [
+                {
+                    'id': comment.id,
+                    'description': comment.description,
+                    'issue_id': comment.issue_id.id,
+                    'author_user_id': comment.author_user_id.id,
+                    'created_time': self.format_datetime(comment.created_time),
+                } for comment in comments
+            ]
+        elif action == 'retrieve':
+            return {
+                'id': comments.id,
+                'description': comments.description,
+                'issue_id': comments.issue_id.id,
+                'author_user_id': comments.author_user_id.id,
+                'created_time': self.format_datetime(comments.created_time),
             }
 
     def register(self, name, mail):
@@ -391,6 +411,105 @@ class TestIssues(DataTest):
         self.assertFalse(Issues.objects.filter(id=1).exists())
 
 
+class TestComments(DataTest):
+    url_list = reverse('comments-list', args=(1, 1))
+    url_detail = reverse('comments-detail', args=(1, 1, 1))
+
+    def test_list(self):
+        user1 = self.register('Tournesol', 'tryphon@herge.com')
+        user2 = self.register('Haddock', 'archibald@herge.com')
+        token = self.login(user1)
+        project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
+        project2 = Projects.objects.create(title="Projet Test2", author_user_id=user2, id=2)
+        contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
+        issue1 = Issues.objects.create(title="Big Bug 1 ?", author_user_id=user1, id=1, assignee_user_id=user2, project_id=project1)
+        issue2 = Issues.objects.create(title="Big Bug 2 ?", author_user_id=user1, id=2, assignee_user_id=user2, project_id=project2)
+        comment1 = Comments.objects.create(description="Comment 1", issue_id=issue1, author_user_id=user1)
+        comment2 = Comments.objects.create(description="Comment 2", issue_id=issue1, author_user_id=user1)
+        comment3 = Comments.objects.create(description="Comment 3", issue_id=issue1, author_user_id=user2)
+        comment4 = Comments.objects.create(description="Comment 4", issue_id=issue2, author_user_id=user1)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
+        response = self.client.get(self.url_list)
+        self.assertEqual(response.status_code, 200)
+        expected = self.get_comments_data(Comments.objects.filter(issue_id=issue1), 'list')
+        expected_false = self.get_comments_data(Comments.objects.filter(issue_id=issue2), 'list')
+        self.assertEqual(expected, response.json()['results'])
+        self.assertNotEqual(expected_false, response.json()['results'])
+
+    def test_detail(self):
+        user1 = self.register('Tournesol', 'tryphon@herge.com')
+        user2 = self.register('Haddock', 'archibald@herge.com')
+        token = self.login(user1)
+        project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
+        project2 = Projects.objects.create(title="Projet Test2", author_user_id=user2, id=2)
+        contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
+        issue1 = Issues.objects.create(title="Big Bug 1 ?", author_user_id=user1, id=1, assignee_user_id=user2, project_id=project1)
+        issue2 = Issues.objects.create(title="Big Bug 2 ?", author_user_id=user2, id=2, assignee_user_id=user2, project_id=project2)
+        comment1 = Comments.objects.create(description="Comment 1", issue_id=issue1, author_user_id=user1)
+        comment2 = Comments.objects.create(description="Comment 2", issue_id=issue1, author_user_id=user1)
+        comment3 = Comments.objects.create(description="Comment 3", issue_id=issue1, author_user_id=user2)
+        comment4 = Comments.objects.create(description="Comment 4", issue_id=issue2, author_user_id=user1)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
+        response = self.client.get(self.url_detail)
+        self.assertEqual(response.status_code, 200)
+        expected = self.get_comments_data(Comments.objects.get(pk=comment1.pk), 'retrieve')
+        expected_false = self.get_comments_data(Comments.objects.get(pk=comment3.pk), 'retrieve')
+        self.assertEqual(expected, response.json())
+        self.assertNotEqual(expected_false, response.json())
+
+    def test_create(self):
+        user1 = self.register('Tournesol', 'tryphon@herge.com')
+        user2 = self.register('Haddock', 'archibald@herge.com')
+        token = self.login(user1)
+        project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
+        contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
+        issue1 = Issues.objects.create(title="Big Bug 1 ?", author_user_id=user1, id=1, assignee_user_id=user2, project_id=project1)
+        comment1 = Comments.objects.create(description="Comment 1", issue_id=issue1, author_user_id=user1)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
+        comments_count = Comments.objects.count()
+        response = self.client.post(self.url_list, data={'description': "My new comment",
+                                                         'author_user_id': user1,
+                                                         'issue_id': issue1,
+                                                         })
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Comments.objects.count(), comments_count+1)
+
+    def test_update(self):
+        user1 = self.register('Tournesol', 'tryphon@herge.com')
+        user2 = self.register('Haddock', 'archibald@herge.com')
+        token = self.login(user1)
+        project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
+        contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
+        issue1 = Issues.objects.create(title="Big Bug 1 ?",
+                                       author_user_id=user1,
+                                       id=1,
+                                       assignee_user_id=user2,
+                                       project_id=project1,
+                                       tag='BUG')
+        comment1 = Comments.objects.create(description="Commenture", issue_id=issue1, author_user_id=user1, id=1)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
+        comment1_initial = Comments.objects.get(id=1)
+        response = self.client.put(reverse(
+            'comments-detail', args=(1, 1, comment1_initial.pk)), data={
+            "description": "Commentaire",
+        })
+        comment1_final = Comments.objects.get(id=1)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(comment1_initial.description, comment1_final.description)
+
+    def test_delete(self):
+        user1 = self.register('Tournesol', 'tryphon@herge.com')
+        user2 = self.register('Haddock', 'archibald@herge.com')
+        project1 = Projects.objects.create(title="Projet Test1", author_user_id=user1, id=1)
+        contributors1 = Contributors.objects.create(user=user1, project=project1, role='AUTHOR')
+        issue1 = Issues.objects.create(title="Big Bug 1 ?", author_user_id=user1, id=1, assignee_user_id=user2, project_id=project1)
+        comment1 = Comments.objects.create(description="Commenture", issue_id=issue1, author_user_id=user1, id=1)
+        token = self.login(user1)
+        self.assertTrue(Comments.objects.filter(id=1).exists())
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
+        response = self.client.delete(reverse('comments-detail', args=(1, 1, comment1.pk)))
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(Comments.objects.filter(id=1).exists())
 
 
 

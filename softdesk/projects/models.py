@@ -87,10 +87,10 @@ class Issues(models.Model):
 
 class Comments(models.Model):
     description = models.CharField(max_length=2048)
-    author = models.ForeignKey(
+    author_user_id = models.ForeignKey(
         to=User,
         on_delete=models.CASCADE)
-    issue = models.ForeignKey(
+    issue_id = models.ForeignKey(
         to=Issues,
         on_delete=models.CASCADE)
     created_time = models.DateTimeField(auto_now_add=True)

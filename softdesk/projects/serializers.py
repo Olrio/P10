@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.db  import IntegrityError
 
-from projects.models import Projects, Issues, Contributors
+from projects.models import Projects, Issues, Contributors, Comments
 from authentication.models import User
 from authentication.serializers import UserSerializer
 
@@ -84,4 +84,16 @@ class ProjectsDetailSerializer(serializers.ModelSerializer):
         return serializer.data
 
 
+class CommentsListSerializer(serializers.ModelSerializer):
 
+    class Meta:
+        model = Comments
+        fields = ['id', 'description', 'issue_id', 'author_user_id', 'created_time']
+        read_only_fields = ['issue_id', 'author_user_id']
+
+
+class CommentsDetailSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Comments
+        fields = ['id', 'description', 'issue_id', 'author_user_id', 'created_time']

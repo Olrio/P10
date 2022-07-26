@@ -1,12 +1,15 @@
 from rest_framework.viewsets import ModelViewSet
-from projects.models import Projects, Issues, Contributors
+from projects.models import Projects, Issues, Contributors, Comments
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.exceptions import NotFound
 from projects.serializers import ProjectsListSerializer, \
     ProjectsDetailSerializer, IssuesListSerializer, IssuesDetailSerializer, \
-    ContributorsListSerializer, ContributorsDetailSerializer
+    ContributorsListSerializer, ContributorsDetailSerializer, CommentsListSerializer, \
+    CommentsDetailSerializer
 from projects.permissions import IsAuthenticated, IsProjectAuthor, IsProjectContributor,\
-    CanReadContributors, CanModifyContributors, CanReadIssues, CanModifyIssues, IsIssueInThisProject
+    CanReadContributors, CanModifyContributors, CanReadIssues, CanModifyIssues, \
+    IsIssueInThisProject, CanReadComments, IsCommentInThisIssue, CanModifyComment, \
+    IsIssueCommentsInThisProject
 
 
 
@@ -60,8 +63,6 @@ class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
             queryset = Issues.objects.filter(id=self.request.parser_context['kwargs']['pk'])
             return queryset
 
-    def get_serializer_class(self):
-        return super().get_serializer_class()
 
     def perform_create(self, serializer):
         self.permission_classes = [IsAuthenticated, IsProjectContributor]
@@ -100,3 +101,77 @@ class ContributorsViewset(MultipleSerializerMixin, ModelViewSet):
             serializer.save(project=Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk']))
         except ObjectDoesNotExist:
             raise NotFound(detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
+
+
+class CommentsViewset(MultipleSerializerMixin, ModelViewSet):
+    serializer_class = CommentsListSerializer
+    detail_serializer_class = CommentsDetailSerializer
+
+    def get_queryset(self):
+        if 'pk' not in self.request.parser_context['kwargs']:
+            self.permission_classes = [IsAuthenticated, IsIssueCommentsInThisProject, CanReadComments]
+            try:
+                Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk'])
+            except ObjectDoesNotExist:
+                raise NotFound(
+                    detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
+            try:
+                Issues.objects.get(id=self.request.parser_context['kwargs']['issue_pk'])
+            except ObjectDoesNotExist:
+                raise NotFound(
+                    detail=f"Sorry, issue {self.request.parser_context['kwargs']['issue_pk']} doesn't exist")
+            self.check_object_permissions(self.request,
+                                          obj=Comments.objects.filter(
+                                              issue_id__project_id__id=self.request.parser_context['kwargs']['project_pk']))
+            queryset = Comments.objects.filter(issue_id__project_id__id=self.request.parser_context['kwargs']['project_pk'])
+            return queryset
+
+        else:
+            try:
+                Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk'])
+            except ObjectDoesNotExist:
+                raise NotFound(
+                    detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
+            try:
+                Issues.objects.get(id=self.request.parser_context['kwargs']['issue_pk'])
+            except ObjectDoesNotExist:
+                raise NotFound(
+                    detail=f"Sorry, issue {self.request.parser_context['kwargs']['issue_pk']} doesn't exist")
+            try:
+                Comments.objects.get(id=self.request.parser_context['kwargs']['pk'])
+            except ObjectDoesNotExist:
+                raise NotFound(
+                    detail=f"Sorry, comment {self.request.parser_context['kwargs']['pk']} doesn't exist")
+
+            if self.request.method == 'GET':
+                self.permission_classes = [IsAuthenticated, IsIssueCommentsInThisProject, CanReadComments,
+                                           IsCommentInThisIssue,
+                                           ]
+            else:
+                self.permission_classes = [IsAuthenticated, IsIssueCommentsInThisProject, CanReadComments,
+                                           CanModifyComment,
+                                           IsCommentInThisIssue,
+                                           ]
+            self.check_object_permissions(self.request,
+                                          obj=Comments.objects.get(id=self.request.parser_context['kwargs'][
+                                                  'pk']))
+            queryset = Comments.objects.filter(id=self.request.parser_context['kwargs']['pk'])
+            return queryset
+
+    def perform_create(self, serializer):
+        self.permission_classes = [IsAuthenticated, IsIssueCommentsInThisProject, CanReadComments]
+        try:
+            Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk'])
+        except ObjectDoesNotExist:
+            raise NotFound(
+                detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
+        try:
+            Issues.objects.get(id=self.request.parser_context['kwargs']['issue_pk'])
+        except ObjectDoesNotExist:
+            raise NotFound(
+                detail=f"Sorry, issue {self.request.parser_context['kwargs']['issue_pk']} doesn't exist")
+        self.check_object_permissions(self.request,
+                                      obj=Comments.objects.filter(
+                                          issue_id__project_id__id=self.request.parser_context['kwargs']['project_pk']))
+        serializer.save(issue_id=Issues.objects.get(id=self.request.parser_context['kwargs']['issue_pk']),
+                        author_user_id=self.request.user)

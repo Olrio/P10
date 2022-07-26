@@ -18,7 +18,7 @@ from django.urls import path, include
 from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 from rest_framework_nested import routers
 
-from projects.views import ProjectsViewset, IssuesViewset, ContributorsViewset
+from projects.views import ProjectsViewset, IssuesViewset, ContributorsViewset, CommentsViewset
 from authentication.views import UserViewset, RegisterUserViewset
 
 router = routers.SimpleRouter()
@@ -30,6 +30,9 @@ issues_router.register('issues', IssuesViewset, basename='issues')
 contributors_router = routers.NestedSimpleRouter(router, 'projects', lookup='project')
 contributors_router.register('users', ContributorsViewset, basename='contributors')
 
+comments_router = routers.NestedSimpleRouter(issues_router, 'issues', lookup='issue')
+comments_router.register('comments', CommentsViewset, basename='comments')
+
 router.register('user', UserViewset, basename='user')
 
 urlpatterns = [
@@ -38,6 +41,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/', include(issues_router.urls)),
     path('api/', include(contributors_router.urls)),
+    path('api/', include(comments_router.urls)),
     path('api/signup/', RegisterUserViewset.as_view(), name='signup'),
     path('api/login/', TokenObtainPairView.as_view(), name='login'),
 ]
