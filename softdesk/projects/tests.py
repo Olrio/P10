@@ -24,6 +24,7 @@ class DataTest(APITestCase):
                     'title': project.title,
                     'description': project.description,
                     'type': project.type,
+                    'author_user_id': project.author_user_id.id,
                 } for project in projects
             ]
         elif action == 'retrieve':
@@ -167,7 +168,7 @@ class TestProjects(DataTest):
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
         projects_count = Projects.objects.count()
         response = self.client.post(self.url_list, data={'title': 'Nouveau projet',
-                                                         'author': user.id,
+                                                         'author_user_id': user.id,
                                                          'description': 'RAS',
                                                          'type': 'BACK_END',
                                                          })
@@ -190,7 +191,7 @@ class TestProjects(DataTest):
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
         response = self.client.put(reverse(
             'projects-detail', args=[project_initial.pk]), data={
-            "author": project_initial.author_user_id,
+            "author_user_id": project_initial.author_user_id.id,
             "description": project_initial.description,
             "type": project_initial.type,
             "title": "Projet de Tournesol"})
