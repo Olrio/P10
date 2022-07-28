@@ -69,6 +69,7 @@ class ProjectsListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Projects
         fields = ['id', 'title', 'description', 'type', 'author_user_id']
+        read_only_fields = ['author_user_id']
 
 
 class ProjectsDetailSerializer(serializers.ModelSerializer):
