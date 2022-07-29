@@ -5,8 +5,8 @@ from authentication.models import User
 
 
 class DataTest(APITestCase):
-
-    def format_datetime(self, value):
+    @staticmethod
+    def format_datetime(value):
         return value.strftime("%Y/%m/%d %H:%M")
 
     def get_user_data(self, user):

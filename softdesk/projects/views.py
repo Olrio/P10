@@ -63,7 +63,6 @@ class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
             queryset = Issues.objects.filter(id=self.request.parser_context['kwargs']['pk'])
             return queryset
 
-
     def perform_create(self, serializer):
         self.permission_classes = [IsAuthenticated, IsProjectContributor]
         try:

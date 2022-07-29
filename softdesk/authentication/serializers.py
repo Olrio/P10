@@ -42,6 +42,10 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         fields = ['username', 'email', 'password', 'password2']
 
     def validate(self, data):
+        if not data['username'][0].isalpha():
+            raise serializers.ValidationError(
+                {"Username error" : "Your username must start with a letter"},
+            )
         if data['email'] != data['email'].lower():
             raise serializers.ValidationError(
                 {'Email case error': 'Only lowercase characters are allowed in mail address'})
