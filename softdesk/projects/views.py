@@ -1,6 +1,7 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import serializers
 from projects.models import Projects, Issues, Contributors, Comments
+from authentication.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from rest_framework.exceptions import NotFound
 from projects.serializers import ProjectsListSerializer, \
@@ -90,6 +91,10 @@ class ContributorsViewset(MultipleSerializerMixin, ModelViewSet):
                 project__id=self.request.parser_context['kwargs']['project_pk']))
             return Contributors.objects.filter(project__id=self.request.parser_context['kwargs']['project_pk'])
         elif 'pk' in self.request.parser_context['kwargs'].keys():
+            try:
+                User.objects.get(id=self.request.parser_context['kwargs']['pk'])
+            except ObjectDoesNotExist:
+                raise NotFound(detail=f"Sorry, user {self.request.parser_context['kwargs']['pk']} doesn't exist")
             self.permission_classes = [IsAuthenticated, CanModifyContributors]
             queryset = Contributors.objects.filter(
                 id=self.request.parser_context['kwargs']['pk'],
