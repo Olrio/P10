@@ -34,6 +34,7 @@ class ContributorsDetailSerializer(serializers.ModelSerializer):
         return serializer.data
 
 
+
 class IssuesListSerializer(serializers.ModelSerializer):
 
     class Meta:

@@ -1,6 +1,7 @@
 from rest_framework.viewsets import ModelViewSet
+from rest_framework import serializers
 from projects.models import Projects, Issues, Contributors, Comments
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from rest_framework.exceptions import NotFound
 from projects.serializers import ProjectsListSerializer, \
     ProjectsDetailSerializer, IssuesListSerializer, IssuesDetailSerializer, \
@@ -104,6 +105,14 @@ class ContributorsViewset(MultipleSerializerMixin, ModelViewSet):
             serializer.save(project=Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk']))
         except ObjectDoesNotExist:
             raise NotFound(detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
+
+    def perform_destroy(self, instance):
+        if instance.user == self.request.user:
+            raise serializers.ValidationError({"contributor deletion error: "
+                                               "you can't remove yourself as a contributor "
+                                               "of this project since you are the author"},)
+        else:
+            instance.delete()
 
 
 class CommentsViewset(MultipleSerializerMixin, ModelViewSet):
