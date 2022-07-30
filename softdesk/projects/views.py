@@ -79,6 +79,10 @@ class ContributorsViewset(MultipleSerializerMixin, ModelViewSet):
     detail_serializer_class = ContributorsDetailSerializer
 
     def get_queryset(self):
+        try:
+            Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk'])
+        except ObjectDoesNotExist:
+            raise NotFound(detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
         if 'pk' not in self.request.parser_context['kwargs'].keys():
             self.permission_classes = [IsAuthenticated, CanReadContributors]
             self.check_object_permissions(self.request, Contributors.objects.filter(
