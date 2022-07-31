@@ -54,6 +54,8 @@ class IssuesListSerializer(serializers.ModelSerializer):
                     {'Assignee case error': 'assignee must be a contributor in this project'})
         else:
             data['assignee_user_id'] = self.context['request'].user
+        if 'status' not in data.keys():
+            data['status'] = 'TO_DO'
         return data
 
 

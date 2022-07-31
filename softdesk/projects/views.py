@@ -14,7 +14,6 @@ from projects.permissions import IsAuthenticated, IsProjectAuthor, IsProjectCont
     IsIssueCommentsInThisProject
 
 
-
 class MultipleSerializerMixin:
     detail_serializer_class = None
 
@@ -51,17 +50,24 @@ class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
     detail_serializer_class = IssuesDetailSerializer
 
     def get_queryset(self):
+        try:
+            Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk'])
+        except ObjectDoesNotExist:
+            raise NotFound(detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
         if 'pk' not in self.request.parser_context['kwargs']:
             self.permission_classes = [IsAuthenticated, CanReadIssues]
-            try:
-                self.check_object_permissions(self.request,
-                                              obj=Issues.objects.filter(project_id__id=self.request.parser_context['kwargs']['project_pk']))
-                queryset = Issues.objects.filter(project_id__id=self.request.parser_context['kwargs']['project_pk'])
-                return queryset
-            except ObjectDoesNotExist:
-                raise NotFound(detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
+            self.check_object_permissions(self.request,
+                                          obj=Issues.objects.filter(project_id__id=self.request.parser_context['kwargs']['project_pk']))
+            queryset = Issues.objects.filter(project_id__id=self.request.parser_context['kwargs']['project_pk'])
+            return queryset
         else:
-            self.permission_classes = [IsAuthenticated, IsIssueInThisProject, CanModifyIssues]
+            try:
+                Issues.objects.get(id=self.request.parser_context['kwargs']['pk'])
+            except ObjectDoesNotExist:
+                raise NotFound(detail=f"Sorry, issue {self.request.parser_context['kwargs']['pk']} doesn't exist")
+            self.permission_classes = [IsAuthenticated, CanReadIssues, IsIssueInThisProject, CanModifyIssues]
+            self.check_object_permissions(self.request,
+                                          obj=Issues.objects.get(id=self.request.parser_context['kwargs']['pk']))
             queryset = Issues.objects.filter(id=self.request.parser_context['kwargs']['pk'])
             return queryset
 
