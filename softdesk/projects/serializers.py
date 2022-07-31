@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.db  import IntegrityError
-
+from django.core.exceptions import ObjectDoesNotExist
 from projects.models import Projects, Issues, Contributors, Comments
 from authentication.models import User
 from authentication.serializers import UserSerializer
@@ -43,6 +43,11 @@ class IssuesListSerializer(serializers.ModelSerializer):
         read_only_fields = ['author_user_id']
 
     def validate(self, data):
+        try:
+            Projects.objects.get(id=self.context['request'].parser_context['kwargs']['project_pk'])
+        except ObjectDoesNotExist:
+            raise serializers.ValidationError(
+                    {"Project error": f"project {self.context['request'].parser_context['kwargs']['project_pk']} doesn't exist"})
         if 'assignee_user_id' in data.keys():
             if not Contributors.objects.filter(user=data['assignee_user_id'], project=Projects.objects.get(id=self.context['request'].parser_context['kwargs']['project_pk'])).exists():
                 raise serializers.ValidationError(
