@@ -92,9 +92,15 @@ class ContributorsViewset(MultipleSerializerMixin, ModelViewSet):
             return Contributors.objects.filter(project__id=self.request.parser_context['kwargs']['project_pk'])
         elif 'pk' in self.request.parser_context['kwargs'].keys():
             try:
-                User.objects.get(id=self.request.parser_context['kwargs']['pk'])
+                Contributors.objects.get(id=self.request.parser_context['kwargs']['pk'])
             except ObjectDoesNotExist:
-                raise NotFound(detail=f"Sorry, user {self.request.parser_context['kwargs']['pk']} doesn't exist")
+                raise NotFound(detail=f"Sorry, contributor {self.request.parser_context['kwargs']['pk']} doesn't exist")
+            if not Contributors.objects.filter(user=self.request.parser_context['kwargs']['pk'],
+                                               project__id=self.request.parser_context['kwargs']['project_pk']).exists():
+                raise serializers.ValidationError(
+                    {"contributor selection error: "
+                     "This is not a contributor of this project"},
+                )
             self.permission_classes = [IsAuthenticated, CanModifyContributors]
             queryset = Contributors.objects.filter(
                 id=self.request.parser_context['kwargs']['pk'],

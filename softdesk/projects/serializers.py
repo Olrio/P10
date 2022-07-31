@@ -39,7 +39,7 @@ class IssuesListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Issues
-        fields = ['id', 'title', 'assignee_user_id', 'author_user_id', 'tag', 'priority', 'status', 'created_time']
+        fields = ['id', 'title', 'desc', 'assignee_user_id', 'author_user_id', 'tag', 'priority', 'status', 'created_time']
         read_only_fields = ['author_user_id']
 
     def validate(self, data):
@@ -62,7 +62,7 @@ class IssuesDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Issues
-        fields = ['id', 'title', 'assignee_user_id', 'author_user_id', 'project_id']
+        fields = ['id', 'title', 'desc', 'assignee_user_id', 'author_user_id', 'project_id']
         read_only_fields = ['author_user_id', 'project_id']
 
     def get_author_user_id(self, instance):

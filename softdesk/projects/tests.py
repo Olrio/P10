@@ -58,6 +58,7 @@ class DataTest(APITestCase):
                 {
                     'id': issue.id,
                     'title': issue.title,
+                    'desc': issue.desc,
                     'assignee_user_id': issue.assignee_user_id.id,
                     'author_user_id': issue.author_user_id.id,
                     'tag': issue.tag,
@@ -70,6 +71,7 @@ class DataTest(APITestCase):
             return {
                 'id': issues.id,
                 'title': issues.title,
+                'desc': issues.desc,
                 'author_user_id': self.get_user_data(User.objects.get(id=issues.author_user_id.id)),
                 'project_id': issues.project_id.id,
                 'assignee_user_id': issues.assignee_user_id.id,
@@ -364,6 +366,7 @@ class TestIssues(DataTest):
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token['access'])
         issues_count = Issues.objects.count()
         response = self.client.post(self.url_list, data={'title': "Big Bug 2",
+                                                         "desc": "Description du problème",
                                                          'author_user_id': user2,
                                                          'id': 2,
                                                          'assignne_user_id': user2,
@@ -391,6 +394,7 @@ class TestIssues(DataTest):
         response = self.client.put(reverse(
             'issues-detail', args=(1, issue1_initial.pk)), data={
             "title": "New title",
+            "desc": "Description du problème",
             "tag": "BUG",
             "priority": "MEDIUM",
         })
