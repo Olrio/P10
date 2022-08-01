@@ -3,4 +3,4 @@ from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     def __str__(self):
-        return f"{self.username} ({self.id})"
+        return f"{self.username} ({self.pk})"

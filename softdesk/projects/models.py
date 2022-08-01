@@ -3,6 +3,7 @@ from authentication.models import User
 
 
 class Projects(models.Model):
+    objects = None
     title = models.CharField(max_length=128)
     description = models.CharField(max_length=2048)
     TYPE_CHOICES = [
@@ -20,10 +21,11 @@ class Projects(models.Model):
     )
 
     def __str__(self):
-        return f"{self.title} ({self.id})"
+        return f"{self.title} ({self.pk})"
 
 
 class Contributors(models.Model):
+    objects = None
     user = models.ForeignKey(
         to=User,
         on_delete=models.CASCADE)
@@ -43,6 +45,7 @@ class Contributors(models.Model):
 
 
 class Issues(models.Model):
+    objects = None
     title = models.CharField(max_length=128)
     desc = models.CharField(max_length=2048)
     TAG_CHOICES = [
@@ -86,6 +89,7 @@ class Issues(models.Model):
 
 
 class Comments(models.Model):
+    objects = None
     description = models.CharField(max_length=2048)
     author_user_id = models.ForeignKey(
         to=User,

@@ -1,8 +1,7 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import serializers
 from projects.models import Projects, Issues, Contributors, Comments
-from authentication.models import User
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.exceptions import NotFound
 from projects.serializers import ProjectsListSerializer, \
     ProjectsDetailSerializer, IssuesListSerializer, IssuesDetailSerializer, \
@@ -57,7 +56,8 @@ class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
         if 'pk' not in self.request.parser_context['kwargs']:
             self.permission_classes = [IsAuthenticated, CanReadIssues]
             self.check_object_permissions(self.request,
-                                          obj=Issues.objects.filter(project_id__id=self.request.parser_context['kwargs']['project_pk']))
+                                          obj=Issues.objects.filter(
+                                              project_id__id=self.request.parser_context['kwargs']['project_pk']))
             queryset = Issues.objects.filter(project_id__id=self.request.parser_context['kwargs']['project_pk'])
             return queryset
         else:
@@ -76,7 +76,8 @@ class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
         try:
             self.check_object_permissions(self.request, Projects.objects.get(
                 id=self.request.parser_context['kwargs']['project_pk']))
-            serializer.save(author_user_id=Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk']).author_user_id,
+            serializer.save(author_user_id=Projects.objects.get(
+                id=self.request.parser_context['kwargs']['project_pk']).author_user_id,
                             project_id=Projects.objects.get(id=self.request.parser_context['kwargs']['project_pk']))
         except ObjectDoesNotExist:
             raise NotFound(detail=f"Sorry, project {self.request.parser_context['kwargs']['project_pk']} doesn't exist")
@@ -101,8 +102,9 @@ class ContributorsViewset(MultipleSerializerMixin, ModelViewSet):
                 Contributors.objects.get(id=self.request.parser_context['kwargs']['pk'])
             except ObjectDoesNotExist:
                 raise NotFound(detail=f"Sorry, contributor {self.request.parser_context['kwargs']['pk']} doesn't exist")
-            if not Contributors.objects.filter(user=self.request.parser_context['kwargs']['pk'],
-                                               project__id=self.request.parser_context['kwargs']['project_pk']).exists():
+            if not Contributors.objects.filter(
+                    id=self.request.parser_context['kwargs']['pk'],
+                    project__id=self.request.parser_context['kwargs']['project_pk']).exists():
                 raise serializers.ValidationError(
                     {"contributor selection error: "
                      "This is not a contributor of this project"},
@@ -151,8 +153,8 @@ class CommentsViewset(MultipleSerializerMixin, ModelViewSet):
                     detail=f"Sorry, issue {self.request.parser_context['kwargs']['issue_pk']} doesn't exist")
             self.check_object_permissions(self.request,
                                           obj=Comments.objects.filter(
-                                              issue_id__project_id__id=self.request.parser_context['kwargs']['project_pk']))
-            queryset = Comments.objects.filter(issue_id__project_id__id=self.request.parser_context['kwargs']['project_pk'])
+                                              issue_id=self.request.parser_context['kwargs']['issue_pk']))
+            queryset = Comments.objects.filter(issue_id=self.request.parser_context['kwargs']['issue_pk'])
             return queryset
 
         else:

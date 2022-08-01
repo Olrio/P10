@@ -6,6 +6,9 @@ from authentication.models import User
 
 class DataTest(APITestCase):
 
+    user1 = None
+    user2 = None
+
     @classmethod
     def setUpTestData(cls):
         cls.user1 = User.objects.create(username="Tintin", pk=22)
@@ -13,7 +16,8 @@ class DataTest(APITestCase):
         cls.project1 = Projects.objects.create(title="Projet 1", author_user_id=cls.user1, pk=22)
         cls.project2 = Projects.objects.create(title="Projet 2", author_user_id=cls.user2, pk=23)
 
-    def get_user_data(self, users, action):
+    @staticmethod
+    def get_user_data(users, action):
         if action == 'list':
             return [
                 {

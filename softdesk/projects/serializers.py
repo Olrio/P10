@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from django.db  import IntegrityError
+from django.db import IntegrityError
 from django.core.exceptions import ObjectDoesNotExist
 from projects.models import Projects, Issues, Contributors, Comments
 from authentication.models import User
@@ -28,18 +28,19 @@ class ContributorsDetailSerializer(serializers.ModelSerializer):
         model = Contributors
         fields = ['id', 'user', 'role']
 
-    def get_user(self, instance):
+    @staticmethod
+    def get_user(instance):
         queryset = User.objects.filter(id=instance.user.id)
         serializer = UserSerializer(queryset, many=True)
         return serializer.data
-
 
 
 class IssuesListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Issues
-        fields = ['id', 'title', 'desc', 'assignee_user_id', 'author_user_id', 'tag', 'priority', 'status', 'created_time']
+        fields = ['id', 'title', 'desc', 'assignee_user_id', 'author_user_id', 'tag', 'priority',
+                  'status', 'created_time']
         read_only_fields = ['author_user_id']
 
     def validate(self, data):
@@ -47,9 +48,13 @@ class IssuesListSerializer(serializers.ModelSerializer):
             Projects.objects.get(id=self.context['request'].parser_context['kwargs']['project_pk'])
         except ObjectDoesNotExist:
             raise serializers.ValidationError(
-                    {"Project error": f"project {self.context['request'].parser_context['kwargs']['project_pk']} doesn't exist"})
+                    {"Project error":
+                        f"project {self.context['request'].parser_context['kwargs']['project_pk']} doesn't exist"})
         if 'assignee_user_id' in data.keys():
-            if not Contributors.objects.filter(user=data['assignee_user_id'], project=Projects.objects.get(id=self.context['request'].parser_context['kwargs']['project_pk'])).exists():
+            if not Contributors.objects.filter(
+                    user=data['assignee_user_id'],
+                    project=Projects.objects.get(
+                        id=self.context['request'].parser_context['kwargs']['project_pk'])).exists():
                 raise serializers.ValidationError(
                     {'Assignee case error': 'assignee must be a contributor in this project'})
         else:
@@ -67,7 +72,8 @@ class IssuesDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'desc', 'assignee_user_id', 'author_user_id', 'project_id']
         read_only_fields = ['author_user_id', 'project_id']
 
-    def get_author_user_id(self, instance):
+    @staticmethod
+    def get_author_user_id(instance):
         queryset = User.objects.filter(id=instance.author_user_id.id)
         serializer = UserSerializer(queryset, many=True)
         return serializer.data
@@ -87,7 +93,8 @@ class ProjectsDetailSerializer(serializers.ModelSerializer):
         model = Projects
         fields = ['id', 'title', 'issues', 'description', 'type']
 
-    def get_issues(self, instance):
+    @staticmethod
+    def get_issues(instance):
         queryset = instance.issues.all()
         serializer = IssuesListSerializer(queryset, many=True)
         return serializer.data

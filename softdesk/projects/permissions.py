@@ -4,7 +4,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.exceptions import NotFound
 
 
-
 class IsAuthenticated(BasePermission):
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_authenticated)

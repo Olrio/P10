@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
-import datetime
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -106,7 +105,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'authentication.validators.ContainsLetterValidator',
     },
-{
+    {
         'NAME': 'authentication.validators.ContainsNumberValidator',
     },
 ]
@@ -147,8 +146,8 @@ REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y/%m/%d %H:%M',
 }
 
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=2),
-}
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=2),
+# }
 
 AUTH_USER_MODEL = 'authentication.User'
