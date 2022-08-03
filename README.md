@@ -20,6 +20,9 @@ Pour initialiser la base de données, taper la commande
 
 Lancer le serveur avec la commande `python manage.py runserver`
 
-Pour tester l'API, on peut utiliser l'application Postman. 
-**L'API Project P10 Softdesk API** est accessible à l'adresse 
-https://documenter.getpostman.com/view/19438945/Uze1uiVU
+Pour tester l'API, on peut utiliser l'application Postman.
+La documentation de **L'API Project P10 Softdesk API** est consultable
+à l'adresse https://documenter.getpostman.com/view/19438945/Uze1uiVU
+
+Pour tester l'API, utiliser ce lien :
+https://go.postman.co/workspace/New-Team-Workspace~4979a498-d910-41f6-9a67-acdc796cc971/collection/19438945-8beb3a2e-896c-4045-b474-313719996fe9?action=share&creator=19438945
