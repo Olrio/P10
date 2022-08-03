@@ -10,7 +10,7 @@ from authentication.serializers import UserSerializer
 class ContributorsListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contributors
-        fields = ['id', 'user', 'role']
+        fields = ["id", "user", "role"]
 
     def create(self, validated_data):
         try:
@@ -18,7 +18,11 @@ class ContributorsListSerializer(serializers.ModelSerializer):
 
         except IntegrityError as error:
             raise ValidationError(
-                {"unique constaint failed": 'This user is already a contributor to this project'}) from error
+                {
+                    "unique constaint failed":
+                        "This user is already a contributor to this project"
+                }
+            ) from error
 
 
 class ContributorsDetailSerializer(serializers.ModelSerializer):
@@ -26,7 +30,7 @@ class ContributorsDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Contributors
-        fields = ['id', 'user', 'role']
+        fields = ["id", "user", "role"]
 
     @staticmethod
     def get_user(instance):
@@ -36,31 +40,47 @@ class ContributorsDetailSerializer(serializers.ModelSerializer):
 
 
 class IssuesListSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Issues
-        fields = ['id', 'title', 'desc', 'assignee_user_id', 'author_user_id', 'tag', 'priority',
-                  'status', 'created_time']
-        read_only_fields = ['author_user_id']
+        fields = [
+            "id",
+            "title",
+            "desc",
+            "assignee_user_id",
+            "author_user_id",
+            "tag",
+            "priority",
+            "status",
+            "created_time",
+        ]
+        read_only_fields = ["author_user_id"]
 
     def validate(self, data):
+        id_project = \
+            self.context["request"].parser_context["kwargs"]["project_pk"]
         try:
-            Projects.objects.get(id=self.context['request'].parser_context['kwargs']['project_pk'])
+            Projects.objects.get(id=id_project)
         except ObjectDoesNotExist:
             raise serializers.ValidationError(
-                    {"Project error":
-                        f"project {self.context['request'].parser_context['kwargs']['project_pk']} doesn't exist"})
-        if 'assignee_user_id' in data.keys():
+                {
+                    "Project error": f"project {id_project} doesn't exist"
+                }
+            )
+        if "assignee_user_id" in data.keys():
             if not Contributors.objects.filter(
-                    user=data['assignee_user_id'],
-                    project=Projects.objects.get(
-                        id=self.context['request'].parser_context['kwargs']['project_pk'])).exists():
+                user=data["assignee_user_id"],
+                project=Projects.objects.get(id=id_project),
+            ).exists():
                 raise serializers.ValidationError(
-                    {'Assignee case error': 'assignee must be a contributor in this project'})
+                    {
+                        "Assignee case error":
+                            "assignee must be a contributor in this project"
+                    }
+                )
         else:
-            data['assignee_user_id'] = self.context['request'].user
-        if 'status' not in data.keys():
-            data['status'] = 'TO_DO'
+            data["assignee_user_id"] = self.context["request"].user
+        if "status" not in data.keys():
+            data["status"] = "TO_DO"
         return data
 
 
@@ -69,8 +89,15 @@ class IssuesDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Issues
-        fields = ['id', 'title', 'desc', 'assignee_user_id', 'author_user_id', 'project_id']
-        read_only_fields = ['author_user_id', 'project_id']
+        fields = [
+            "id",
+            "title",
+            "desc",
+            "assignee_user_id",
+            "author_user_id",
+            "project_id",
+        ]
+        read_only_fields = ["author_user_id", "project_id"]
 
     @staticmethod
     def get_author_user_id(instance):
@@ -82,8 +109,8 @@ class IssuesDetailSerializer(serializers.ModelSerializer):
 class ProjectsListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Projects
-        fields = ['id', 'title', 'description', 'type', 'author_user_id']
-        read_only_fields = ['author_user_id']
+        fields = ["id", "title", "description", "type", "author_user_id"]
+        read_only_fields = ["author_user_id"]
 
 
 class ProjectsDetailSerializer(serializers.ModelSerializer):
@@ -91,7 +118,7 @@ class ProjectsDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Projects
-        fields = ['id', 'title', 'issues', 'description', 'type']
+        fields = ["id", "title", "issues", "description", "type"]
 
     @staticmethod
     def get_issues(instance):
@@ -101,15 +128,21 @@ class ProjectsDetailSerializer(serializers.ModelSerializer):
 
 
 class CommentsListSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Comments
-        fields = ['id', 'description', 'issue_id', 'author_user_id', 'created_time']
-        read_only_fields = ['issue_id', 'author_user_id']
+        fields = ["id",
+                  "description",
+                  "issue_id",
+                  "author_user_id",
+                  "created_time"]
+        read_only_fields = ["issue_id", "author_user_id"]
 
 
 class CommentsDetailSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Comments
-        fields = ['id', 'description', 'issue_id', 'author_user_id', 'created_time']
+        fields = ["id",
+                  "description",
+                  "issue_id",
+                  "author_user_id",
+                  "created_time"]
