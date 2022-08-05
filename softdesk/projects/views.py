@@ -41,6 +41,7 @@ class MultipleSerializerMixin:
 class ProjectsViewset(MultipleSerializerMixin, ModelViewSet):
     serializer_class = ProjectsListSerializer
     detail_serializer_class = ProjectsDetailSerializer
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save(author_user_id=self.request.user)
@@ -52,11 +53,10 @@ class ProjectsViewset(MultipleSerializerMixin, ModelViewSet):
 
     def get_queryset(self):
         if not self.request.parser_context["kwargs"]:
-            self.permission_classes = [IsAuthenticated]
             return Projects.objects.filter(
                 contributors__user=self.request.user)
         elif self.request.parser_context["kwargs"]["pk"]:
-            self.permission_classes = [IsAuthenticated, IsProjectAuthor]
+            self.permission_classes = [IsProjectAuthor]
             queryset = Projects.objects.filter(
                 id=self.request.parser_context["kwargs"]["pk"]
             )
@@ -66,6 +66,7 @@ class ProjectsViewset(MultipleSerializerMixin, ModelViewSet):
 class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
     serializer_class = IssuesListSerializer
     detail_serializer_class = IssuesDetailSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         project_pk = self.request.parser_context["kwargs"]["project_pk"]
@@ -76,7 +77,7 @@ class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
                 detail=f"Sorry, project {project_pk} doesn't exist"
             )
         if "pk" not in self.request.parser_context["kwargs"]:
-            self.permission_classes = [IsAuthenticated, CanReadIssues]
+            self.permission_classes = [CanReadIssues]
             self.check_object_permissions(
                 self.request,
                 obj=Issues.objects.filter(
@@ -98,7 +99,6 @@ class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
                            f" doesn't exist"
                 )
             self.permission_classes = [
-                IsAuthenticated,
                 CanReadIssues,
                 IsIssueInThisProject,
                 CanModifyIssues,
@@ -115,7 +115,7 @@ class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
 
     def perform_create(self, serializer):
         project_pk = self.request.parser_context["kwargs"]["project_pk"]
-        self.permission_classes = [IsAuthenticated, IsProjectContributor]
+        self.permission_classes = [IsProjectContributor]
         try:
             self.check_object_permissions(
                 self.request,
@@ -135,6 +135,7 @@ class IssuesViewset(MultipleSerializerMixin, ModelViewSet):
 class ContributorsViewset(MultipleSerializerMixin, ModelViewSet):
     serializer_class = ContributorsListSerializer
     detail_serializer_class = ContributorsDetailSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         project_pk = self.request.parser_context["kwargs"]["project_pk"]
@@ -145,7 +146,7 @@ class ContributorsViewset(MultipleSerializerMixin, ModelViewSet):
                 detail=f"Sorry, project {project_pk} doesn't exist"
             )
         if "pk" not in self.request.parser_context["kwargs"].keys():
-            self.permission_classes = [IsAuthenticated, CanReadContributors]
+            self.permission_classes = [CanReadContributors]
             self.check_object_permissions(
                 self.request,
                 Contributors.objects.filter(project__id=project_pk),
@@ -171,7 +172,7 @@ class ContributorsViewset(MultipleSerializerMixin, ModelViewSet):
                         "This is not a contributor of this project"
                     },
                 )
-            self.permission_classes = [IsAuthenticated, CanModifyContributors]
+            self.permission_classes = [CanModifyContributors]
             queryset = Contributors.objects.filter(
                 id=self.request.parser_context["kwargs"]["pk"],
                 project=self.request.parser_context["kwargs"]["project_pk"],
@@ -180,7 +181,7 @@ class ContributorsViewset(MultipleSerializerMixin, ModelViewSet):
 
     def perform_create(self, serializer):
         project_pk = self.request.parser_context["kwargs"]["project_pk"]
-        self.permission_classes = [IsAuthenticated, IsProjectAuthor]
+        self.permission_classes = [IsProjectAuthor]
         try:
             self.check_object_permissions(
                 self.request,
@@ -210,13 +211,13 @@ class ContributorsViewset(MultipleSerializerMixin, ModelViewSet):
 class CommentsViewset(MultipleSerializerMixin, ModelViewSet):
     serializer_class = CommentsListSerializer
     detail_serializer_class = CommentsDetailSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         project_pk = self.request.parser_context["kwargs"]["project_pk"]
         issue_pk = self.request.parser_context['kwargs']['issue_pk']
         if "pk" not in self.request.parser_context["kwargs"]:
             self.permission_classes = [
-                IsAuthenticated,
                 IsIssueCommentsInThisProject,
                 CanReadComments,
             ]
@@ -264,14 +265,12 @@ class CommentsViewset(MultipleSerializerMixin, ModelViewSet):
 
             if self.request.method == "GET":
                 self.permission_classes = [
-                    IsAuthenticated,
                     IsIssueCommentsInThisProject,
                     CanReadComments,
                     IsCommentInThisIssue,
                 ]
             else:
                 self.permission_classes = [
-                    IsAuthenticated,
                     IsIssueCommentsInThisProject,
                     CanReadComments,
                     CanModifyComment,
@@ -290,7 +289,6 @@ class CommentsViewset(MultipleSerializerMixin, ModelViewSet):
 
     def perform_create(self, serializer):
         self.permission_classes = [
-            IsAuthenticated,
             IsIssueCommentsInThisProject,
             CanReadComments,
         ]
