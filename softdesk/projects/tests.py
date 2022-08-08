@@ -353,34 +353,6 @@ class TestContributors(DataTest):
         self.assertEqual(expected, response.json()["results"])
         self.assertNotEqual(expected_false, response.json()["results"])
 
-    def test_detail(self):
-        user1 = self.register("Tournesol", "tryphon@herge.com")
-        user2 = self.register("Haddock", "archibald@herge.com")
-        token = self.login(user1)
-        project1 = Projects.objects.create(
-            title="Projet Test1", author_user_id=user1, id=1
-        )
-        project2 = Projects.objects.create(
-            title="Projet Test2", author_user_id=user2, id=2
-        )
-        contributors1 = Contributors.objects.create(
-            user=user1, project=project1, role="AUTHOR"
-        )
-        contributors2 = Contributors.objects.create(
-            user=user2,
-            project=project2)
-        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + token["access"])
-        response = self.client.get(self.url_detail)
-        self.assertEqual(response.status_code, 200)
-        expected = self.get_contributors_data(
-            Contributors.objects.get(pk=contributors1.pk), "retrieve"
-        )
-        expected_false = self.get_contributors_data(
-            Contributors.objects.get(pk=contributors2.pk), "retrieve"
-        )
-        self.assertEqual(expected, response.json())
-        self.assertNotEqual(expected_false, response.json())
-
     def test_create(self):
         user1 = self.register("Tournesol", "tryphon@herge.com")
         user2 = self.register("Haddock", "archibald@herge.com")
@@ -403,36 +375,6 @@ class TestContributors(DataTest):
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Contributors.objects.count(), contributors_count + 1)
-
-    def test_update(self):
-        user1 = self.register("Tournesol", "tryphon@herge.com")
-        user2 = self.register("Haddock", "archibald@herge.com")
-        token = self.login(user1)
-        project1 = Projects.objects.create(
-            title="Projet Test1", author_user_id=user1, id=1
-        )
-        Contributors.objects.create(
-            user=user1,
-            project=project1,
-            role="AUTHOR")
-        Contributors.objects.create(
-            user=user2,
-            project=project1,
-            role="AUTHOR",
-            id=22)
-        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + token["access"])
-        contributors2_initial = Contributors.objects.get(id=22)
-        response = self.client.put(
-            reverse("contributors-detail", args=(1, contributors2_initial.pk)),
-            data={
-                "user": user2.id,
-                "role": "CONTRIBUTOR",
-            },
-        )
-        contributors2_final = Contributors.objects.get(id=22)
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(
-            contributors2_initial.role == contributors2_final.role)
 
     def test_delete(self):
         user1 = self.register("Tournesol", "tryphon@herge.com")

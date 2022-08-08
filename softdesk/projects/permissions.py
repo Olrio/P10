@@ -31,7 +31,6 @@ class IsProjectContributorViaComment(BasePermission):
     )
 
     def has_object_permission(self, request, view, obj):
-        print(obj, obj.issue_id.project_id)
         return (
             Contributors.objects.filter(
                 project=obj.issue_id.project_id).
@@ -69,3 +68,13 @@ class IsCommentAuthor(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return request.user == obj.author_user_id
+
+
+class IsContributorsLeader(BasePermission):
+    message = (
+        "Sorry, you don't have permission to delete a contributor."
+        "You're not the author of this project"
+    )
+
+    def has_object_permission(self, request, view, obj):
+        return request.user == obj.project.author_user_id

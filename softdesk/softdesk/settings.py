@@ -110,10 +110,6 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME":
             "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
-    # {
-    #     'NAME':
-    #     'django.contrib.auth.password_validation.NumericPasswordValidator',
-    # },
     {
         "NAME": "authentication.validators.ContainsLetterValidator",
     },
@@ -157,7 +153,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=2),
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(hours=1),
 }
 
 AUTH_USER_MODEL = "authentication.User"

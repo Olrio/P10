@@ -20,6 +20,7 @@ from projects.permissions import (
     IsProjectContributorViaComment,
     IsIssueAuthor,
     IsCommentAuthor,
+    IsContributorsLeader
 )
 
 
@@ -179,10 +180,10 @@ class ContributorsViewset(MultipleSerializerMixin, ModelViewSet):
                         "This is not a contributor of this project"
                     },
                 )
-            self.permission_classes = [IsProjectAuthor]
-            self.check_object_permissions(self.request,
-                                          obj=Projects.objects.get(
-                                              id=project_pk))
+            self.permission_classes = [IsContributorsLeader]
+            # self.check_object_permissions(self.request,
+            #                               obj=Projects.objects.get(
+            #                                   id=project_pk))
             queryset = Contributors.objects.filter(
                 id=self.request.parser_context["kwargs"]["pk"],
                 project=self.request.parser_context["kwargs"]["project_pk"],
